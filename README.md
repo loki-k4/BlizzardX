@@ -1,9 +1,6 @@
 # BlizzardX
 BlizzardX: Cracking the Code of Snow &amp; Temperature Swings
 
-# Predicting Extreme Cold Events in New Hampshire: Snowfall, Snow Depth, and Temperature Analysis
-
-
 
 ## 👥 Team Members
 - **Team H**    
