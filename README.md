@@ -6,9 +6,7 @@ BlizzardX: Cracking the Code of Snow &amp; Temperature Swings
 
 
 ## 👥 Team Members
-- **Team H**  
-- **Team Members**:  
-  -  
+- **Team H**    
   - [Hema Pushpika Konduru]
   - [Lokeswar Kudumula] 
   - [Namruth Goud Thimmapuram]
