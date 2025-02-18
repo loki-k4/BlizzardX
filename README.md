@@ -24,7 +24,7 @@ How do snowfall and snow depth influence temperature fluctuations in New Hampshi
 This project analyzes historical weather data from NOAA GHCN-Daily to:  
 1. Investigate correlations between snowfall, snow depth, and temperature extremes.  
 2. Build regression models to predict temperature.  
-3. Classify days with extreme cold events (e.g., TMIN < -10°C).  
+3. Classify days with extreme cold events.  
 
 ---
 
@@ -35,7 +35,14 @@ This project analyzes historical weather data from NOAA GHCN-Daily to:
 - **Filter**: Focused on **New Hampshire stations only** (11 stations).  
 
 **Key Attributes**:  
-- `SNOW` (snowfall), `SNWD` (snow depth), `TMAX` (Maximum temperature (tenths of degrees C)), `TMIN` (Minimum temperature (tenths of degrees C)), `ELEVATION`,`PRCP`(Precipitation (tenths of mm)), `WT04`(Ice pellets, sleet, snow pellets, or small hail), `WT09` (Blowing or drifting snow), `WT18`(Snow, snow pellets, snow grains, or ice crystals).  
+- `SNOW` (snowfall),
+- `SNWD` (snow depth),
+- `TMAX` (Maximum temperature (tenths of degrees C)), 
+- `TMIN` (Minimum temperature (tenths of degrees C)),
+- `PRCP`(Precipitation (tenths of mm)), 
+- `WT04`(Ice pellets, sleet, snow pellets, or small hail), 
+- `WT09` (Blowing or drifting snow), 
+- `WT18`(Snow, snow pellets, snow grains, or ice crystals).  
 
 ---
 
