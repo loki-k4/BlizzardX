@@ -35,9 +35,5 @@ This project analyzes historical weather data from NOAA GHCN-Daily to:
 - `TMAX` (Maximum temperature (tenths of degrees C)), 
 - `TMIN` (Minimum temperature (tenths of degrees C)),
 - `PRCP`(Precipitation (tenths of mm)), 
-- `WT04`(Ice pellets, sleet, snow pellets, or small hail), 
-- `WT09` (Blowing or drifting snow), 
-- `WT18`(Snow, snow pellets, snow grains, or ice crystals).  
-
 ---
 
