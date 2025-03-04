@@ -27,7 +27,7 @@ This project analyzes historical weather data from NOAA GHCN-Daily to:
 **Source**: NOAA Global Historical Climatology Network Daily (GHCN-Daily)  
 - [Station Data](https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt)  
 - [Daily Records](https://www.ncei.noaa.gov/pub/data/ghcn/daily/all/)  
-- **Filter**: Focused on **New Hampshire stations only** (11 stations).  
+- **Filter**: Focused on **New Hampshire stations**  
 
 **Key Attributes**:  
 - `SNOW` (snowfall),
