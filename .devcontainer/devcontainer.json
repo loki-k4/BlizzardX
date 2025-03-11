@@ -2,15 +2,35 @@
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
-      "version": "latest",
-      "installTools": true,
-      "toolsToInstall": "pylint,black,flake8,ipython,jupyterlab,numpy,pandas,matplotlib,seaborn,scipy,scikit-learn,tensorflow,torch,sqlalchemy",
-      "optimize": false,
-      "enableShared": false,
-      "installPath": "/usr/local/python",
-      "installJupyterlab": true,
-      "configureJupyterlabAllowOrigin": "http://localhost",
-      "httpProxy": "http://blizzard.x.com:8080"
+      "version": "3.11",              
+      "installTools": true,           
+      "toolsToInstall": "pylint,black,flake8",
+      "optimize": false,              
+      "enableShared": false,           
+      "installPath": "/usr/local/bin", 
+      "installJupyterlab": true,     
+      "configureJupyterlabAllowOrigin": "http://localhost:3000",  
+      "httpProxy": "http://proxy.example.com:8080" 
     }
-  }
+  },
+  "customizations": {
+    "codespaces": {
+      "openFiles": []
+    },
+    "vscode": {
+      "extensions": [
+        "ms-toolsai.jupyter",
+        "ms-python.python",
+        "ms-python.pylance",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8GB"
+  },
+  "waitFor": "onCreateCommand",
+  "updateContentCommand": "python3 -m pip install -r requirements.txt",
+  "postCreateCommand": ""
 }
