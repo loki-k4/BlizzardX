@@ -18,13 +18,14 @@
         "ms-toolsai.jupyter",
         "ms-python.python",
         "ms-python.pylance",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "GitHub.copilot"
       ]
     }
   },
   "hostRequirements": {
     "cpus": 4,
-    "memory": "8GB"
+    "memory": "16GB" 
   },
   "waitFor": "onCreateCommand",
   "updateContentCommand": "python3 -m pip install -r requirements.txt",
