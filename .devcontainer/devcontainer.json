@@ -2,15 +2,10 @@
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
-      "version": "3.11",              
-      "installTools": true,           
-      "toolsToInstall": "pylint,black,flake8",
+      "version": "latest",              
+      "installTools": false,           
       "optimize": false,              
-      "enableShared": false,           
-      "installPath": "/usr/local/bin", 
-      "installJupyterlab": true,     
-      "configureJupyterlabAllowOrigin": "http://localhost:3000",  
-      "httpProxy": "http://proxy.example.com:8080" 
+      "enableShared": false,
     }
   },
   "customizations": {
