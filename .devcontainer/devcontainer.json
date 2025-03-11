@@ -1,11 +1,12 @@
 {
+  "name": "Data Science Env",
   "image": "mcr.microsoft.com/devcontainers/universal:2",
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
-      "version": "latest",              
-      "installTools": false,           
-      "optimize": false,              
-      "enableShared": false,
+      "version": "latest",
+      "installTools": false,
+      "optimize": false,
+      "enableShared": false
     }
   },
   "customizations": {
