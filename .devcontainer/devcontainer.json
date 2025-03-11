@@ -1,12 +1,15 @@
 {
   "name": "Data Science Env",
-  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "image": "mcr.microsoft.com/devcontainers/python:3.9",  
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "version": "latest",
       "installTools": false,
       "optimize": false,
       "enableShared": false
+    },
+    "ghcr.io/devcontainers/features/jupyterlab:1": {
+      "version": "latest"
     }
   },
   "customizations": {
@@ -15,19 +18,20 @@
     },
     "vscode": {
       "extensions": [
-        "ms-toolsai.jupyter",
-        "ms-python.python",
-        "ms-python.pylance",
-        "esbenp.prettier-vscode",
-        "GitHub.copilot"
+        "ms-toolsai.jupyter",  // For Jupyter Notebooks
+        "ms-python.python",    // Python extension
+        "ms-python.pylance",   // Python language support
+        "esbenp.prettier-vscode", // Code formatting
+        "magicstack.magicpython", // Python syntax highlighting
+        "ms-toolsai.jupyter-keymap"  // Jupyter keyboard shortcuts
       ]
     }
   },
   "hostRequirements": {
     "cpus": 4,
-    "memory": "16GB" 
+    "memory": "16GB"
   },
   "waitFor": "onCreateCommand",
-  "updateContentCommand": "python3 -m pip install -r requirements.txt",
-  "postCreateCommand": ""
+  "updateContentCommand": "python3 -m pip install -r requirements.txt",  // Automatically install dependencies
+  "postCreateCommand": "echo 'Data Science environment is ready!'"
 }
