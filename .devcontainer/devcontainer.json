@@ -7,9 +7,6 @@
       "installTools": false,
       "optimize": false,
       "enableShared": false
-    },
-    "ghcr.io/devcontainers/features/jupyterlab:1": {
-      "version": "latest"
     }
   },
   "customizations": {
