@@ -21,9 +21,22 @@ jobs:
       with:
         version: latest
     
+    - name: Cache Docker layers
+      uses: actions/cache@v2
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+    
     - name: Build dev container image from Dockerfile
       run: |
-        docker build -t myusername/mydevcontainer:latest -f Dockerfile .
+        docker build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache -t mydevcontainer:latest -f Dockerfile .
+
+    - name: Tag dev container image with version number
+      run: |
+        version=$(date +%Y%m%d%H%M%S)
+        docker tag mydevcontainer:latest mydevcontainer:$version
 
     - name: Trigger Codespace rebuild
       run: |
