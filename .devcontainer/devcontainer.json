@@ -1,6 +1,6 @@
 {
   "name": "Data Science Env",
-  "image": "mcr.microsoft.com/devcontainers/python:3.9",  
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",  
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11"
@@ -15,12 +15,8 @@
         "ms-toolsai.jupyter",
         "ms-python.python",   
         "ms-python.pylance",  
-        "esbenp.prettier-vscode", 
-        "magicstack.magicpython", 
         "ms-toolsai.jupyter-keymap",
-        "github.copilot",
-        "ms-toolsai.datawrangler",
-        "ms-azuretools.vscode-docker"
+        "github.copilot"
        
       ]
     }
@@ -30,6 +26,6 @@
     "memory": "16GB"
   },
   "waitFor": "onCreateCommand",
-  "updateContentCommand": "python3 -m pip install --upgrade pip && python3 -m pip install -r requirements.txt",  // Automatically install dependencies
+  "updateContentCommand": "pip install --cache-dir=/tmp/.cache -r requirements.txt",  // Automatically install dependencies
   "postCreateCommand": "echo 'Data Science environment is ready!'"
 }
