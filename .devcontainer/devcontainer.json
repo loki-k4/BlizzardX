@@ -1,6 +1,6 @@
 {
   "name": "Data Science Env",
-  "image": "mcr.microsoft.com/devcontainers/python:3.11",  
+  "image": "mcr.microsoft.com/devcontainers/python:3.11-slim",  
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11"
@@ -14,10 +14,8 @@
       "extensions": [
         "ms-toolsai.jupyter",
         "ms-python.python",   
-        "ms-python.pylance",  
-        "ms-toolsai.jupyter-keymap",
+        "ms-python.pylance",
         "github.copilot"
-       
       ]
     }
   },
@@ -25,7 +23,6 @@
     "cpus": 4,
     "memory": "16GB"
   },
-  "waitFor": "onCreateCommand",
-  "updateContentCommand": "pip install --cache-dir=/tmp/.cache -r requirements.txt",  // Automatically install dependencies
-  "postCreateCommand": "echo 'Data Science environment is ready!'"
+  "waitFor": "none",
+  "postCreateCommand": "pip install --cache-dir=/tmp/.cache -r requirements.txt"
 }
