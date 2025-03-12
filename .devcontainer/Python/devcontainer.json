@@ -1,5 +1,5 @@
 {
-  "name": "Python_Env",
+  "name": "Python-Env",
   "image": "mcr.microsoft.com/devcontainers/python:3.11",  
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
