@@ -12,12 +12,16 @@
     },
     "vscode": {
       "extensions": [
-        "ms-toolsai.jupyter",  // For Jupyter Notebooks
-        "ms-python.python",    // Python extension
-        "ms-python.pylance",   // Python language support
-        "esbenp.prettier-vscode", // Code formatting
-        "magicstack.magicpython", // Python syntax highlighting
-        "ms-toolsai.jupyter-keymap"  // Jupyter keyboard shortcuts
+        "ms-toolsai.jupyter",
+        "ms-python.python",   
+        "ms-python.pylance",  
+        "esbenp.prettier-vscode", 
+        "magicstack.magicpython", 
+        "ms-toolsai.jupyter-keymap",
+        "github.copilot",
+        "ms-toolsai.datawrangler",
+        "ms-azuretools.vscode-docker"
+       
       ]
     }
   },
