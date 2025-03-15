@@ -1,6 +1,6 @@
 {
   "name": "Python 3.11 Development Container",
-  "dockerFile": "./.devcontainer/Dockerfile",  
+  "dockerFile": "./.devcontainer/Python/Dockerfile",  
   "workspaceFolder": "/workspace",
   "postCreateCommand": "pip install --cache-dir=/tmp/.cache -r requirements.txt",
   "customizations": {
