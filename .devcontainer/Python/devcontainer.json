@@ -1,8 +1,11 @@
 {
   "name": "Python 3.11 Development Container",
-  "dockerFile": "./.devcontainer/Python/Dockerfile",  
-  "workspaceFolder": "/workspace",
-  "postCreateCommand": "pip install --cache-dir=/tmp/.cache -r requirements.txt",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",  
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    }
+  },
   "customizations": {
     "codespaces": {
       "openFiles": []
@@ -20,5 +23,6 @@
     "cpus": 4,
     "memory": "16GB"
   },
-  "waitFor": "none"
+  "waitFor": "none",
+  "postCreateCommand": "pip install --cache-dir=/tmp/.cache -r requirements.txt"
 }
