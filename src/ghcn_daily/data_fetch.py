@@ -3,6 +3,8 @@ import pandas as pd
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
 from .data_processing import DataProcessor
+import asyncio
+import aiohttp
 
 class DataFetcher_T:
     @staticmethod
@@ -45,3 +47,55 @@ class DataFetcher_T:
         print(f"Data fetching and saving completed. Data saved to DataFrame.")
         return df
 
+
+
+
+class DataFetcher_A:
+    @staticmethod
+    async def fetch_data_from_url(session, url):
+        async with session.get(url) as response:
+            data = []
+            if response.status == 200:
+                text = await response.text()
+                for line in text.splitlines():
+                    data.append(DataProcessor.parse_data_dly(line))
+            else:
+                print(f"Failed to retrieve data for {url}. Status code: {response.status}")
+            return data
+
+    @staticmethod
+    async def fetch_and_save_to_dataframe(station_ids, chunk_size=100):
+        all_data = []
+        
+        # Prepare the headers for the DataFrame
+        headers = ["ID", "YEAR", "Month", "ELEMENT"]
+        for i in range(1, 32):
+            headers.extend([f"VALUE{i}", f"MFLAG{i}", f"QFLAG{i}", f"SFLAG{i}"])
+
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            
+            # Fetch data in chunks
+            for i in tqdm(range(0, len(station_ids), chunk_size), desc="Fetching Data", unit="chunk", ncols=100):
+                chunk_station_ids = station_ids[i:i + chunk_size]
+                for station_id in chunk_station_ids:
+                    url = f"https://www.ncei.noaa.gov/pub/data/ghcn/daily/all/{station_id}.dly"
+                    task = asyncio.create_task(DataFetcher.fetch_data_from_url(session, url))
+                    tasks.append(task)
+            
+            # Gather results and process them
+            results = await asyncio.gather(*tasks)
+
+            # Flatten the results and convert to DataFrame
+            for chunk_data in results:
+                for entry in chunk_data:
+                    row = [entry["ID"], entry["YEAR"], entry["Month"], entry["ELEMENT"]]
+                    row.extend(entry["DATA"])
+                    all_data.append(row)
+
+        df = pd.DataFrame(all_data, columns=headers)
+        print(f"Data fetching and saving completed. Data saved to DataFrame.")
+        return df
+
+# To run the asynchronous method:
+# asyncio.run(DataFetcher.fetch_and_save_to_dataframe(station_ids))
