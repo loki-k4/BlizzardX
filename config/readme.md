@@ -1,5 +1,3 @@
-Sure! Here is a simplified `README.md` file specifically for the `config` folder and its usage:
-
 ---
 
 # `config` Folder - Configuration Management
@@ -94,19 +92,3 @@ Here is an example of what the `settings.json` configuration file might look lik
     "state_raw": "https://raw.githubusercontent.com/georgique/world-geojson/develop/states/usa/new_hampshire.json"
 }
 ```
-
-## Contributing
-
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature-name`).
-3. Commit your changes (`git commit -am 'Add feature'`).
-4. Push to the branch (`git push origin feature-name`).
-5. Create a new Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-This README focuses solely on explaining the usage of the `config` folder and its `ConfigManager` class. It guides users on how to load configuration files, retrieve values, and how to structure the `settings.json` file.
