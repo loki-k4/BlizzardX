@@ -17,7 +17,7 @@ src/config
 
 ### 1. Initialize `ConfigManager`
 
-Import the `ConfigManager` class and initialize it. Optionally, you can specify the directory where your configuration files are stored (the default is `"configmanager"`):
+Import the `ConfigManager` class and initialize it. Optionally, you can specify the directory where your configuration files are stored (the default is `"config"`):
 
 ```python
 from src.config.configmanager import ConfigManager
@@ -49,7 +49,8 @@ inventory_url = config_manager.get("urls.json", "inventory")
 
 To see all the configuration files that have been successfully loaded, you can use the `list_loaded_configs()` method:
 
-```python 
+```python
+# List all loaded config files
 print("Loaded Configurations:", config_manager.list_loaded_configs())
 ```
 
