@@ -17,7 +17,7 @@ class DataFetcher_T:
         return data
 
     @staticmethod
-    def save_to_dataframe(station_ids, chunk_size=1000):
+    def save_to_dataframe(station_ids, chunk_size=100):
         all_data = []
         headers = ["ID", "YEAR", "Month", "ELEMENT"]
         for i in range(1, 32):
