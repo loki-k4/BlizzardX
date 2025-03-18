@@ -1,5 +1,3 @@
----
-
 # `config` Folder - Configuration Management
 
 This folder contains the `ConfigManager` class, which is responsible for managing and loading configuration files in JSON format. These configuration files can store various settings, such as URLs or other project-specific values.
@@ -43,6 +41,10 @@ Once the configurations are loaded, use the `get()` method to retrieve specific 
 ```python
 # Retrieve URLs from the urls.json file
 inventory_url = config_manager.get("urls.json", "inventory")
+stations_url = config_manager.get("urls.json", "stations")
+countries_url = config_manager.get("urls.json", "countries")
+states_url = config_manager.get("urls.json", "states")
+state_raw_url = config_manager.get("urls.json", "state_raw")
 ```
 
 ### 4. List Loaded Config Files
@@ -53,5 +55,3 @@ To see all the configuration files that have been successfully loaded, you can u
 # List all loaded config files
 print("Loaded Configurations:", config_manager.list_loaded_configs())
 ```
-
----
