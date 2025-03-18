@@ -16,7 +16,7 @@ class DataFetcher:
         return data
 
     @staticmethod
-    def fetch_and_save_to_dataframe(station_ids, chunk_size=1000):
+    def fetch_and_save_to_dataframe(station_ids, chunk_size=100):
         all_data = []
         
         # Prepare the headers for the DataFrame
@@ -45,3 +45,20 @@ class DataFetcher:
         
         print(f"Data fetching and saving completed. Data saved to DataFrame")
         return df
+    
+    @staticmethod
+    def fetch_to_df(stations):
+        data = []
+        for station_id in tqdm(stations, desc="Fetching Data", unit="station", ncols=100):
+            url = f"https://www.ncei.noaa.gov/pub/data/ghcn/daily/all/{station_id}.dly"
+            data = DataFetcher.read_data_from_url(url)
+            data.extend(data)
+        headers = ["ID", "YEAR", "Month", "ELEMENT"]
+        for i in range(1, 32):
+            headers.extend([f"VALUE{i}", f"MFLAG{i}", f"QFLAG{i}", f"SFLAG{i}"])
+        df_data = []
+        for entry in data:
+            row = [entry["ID"], entry["YEAR"], entry["Month"], entry["ELEMENT"]]
+            row.extend(entry["DATA"])
+            df_data.append(row)
+        return pd.DataFrame(df_data, columns=headers)
