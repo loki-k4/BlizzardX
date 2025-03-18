@@ -19,8 +19,6 @@ class DataFetcher_T:
     @staticmethod
     def save_to_dataframe(station_ids, chunk_size=1000):
         all_data = []
-
-        # Prepare the headers for the DataFrame
         headers = ["ID", "YEAR", "Month", "ELEMENT"]
         for i in range(1, 32):
             headers.extend([f"VALUE{i}", f"MFLAG{i}", f"QFLAG{i}", f"SFLAG{i}"])
