@@ -1,14 +1,15 @@
 import requests
 import pandas as pd
-from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor
-from .data_processing import DataProcessor
+from tqdm import tqdm
 import asyncio
 import aiohttp
+from .data_processing import DataProcessor
 
 class DataFetcher_T:
     @staticmethod
     def data_from_url(url):
+        """Fetch data synchronously using requests."""
         data = []
         response = requests.get(url)
         if response.status_code == 200:
@@ -19,16 +20,17 @@ class DataFetcher_T:
         return data
 
     @staticmethod
-    def save_to_dataframe(station_ids, chunk_size=100):
+    def save_to_dataframe(station_ids, chunk_size=100, max_workers=20):
+        """Fetch data using ThreadPoolExecutor and save it to DataFrame."""
         all_data = []
         headers = ["ID", "YEAR", "Month", "ELEMENT"]
         for i in range(1, 32):
             headers.extend([f"VALUE{i}", f"MFLAG{i}", f"QFLAG{i}", f"SFLAG{i}"])
 
-        # Using ThreadPoolExecutor to fetch data in parallel
-        with ThreadPoolExecutor(max_workers=20) as executor:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = []
             
+            # Using ThreadPoolExecutor to submit tasks for each station ID
             for i in tqdm(range(0, len(station_ids), chunk_size), desc="Fetching Data", unit="chunk", ncols=100):
                 chunk_station_ids = station_ids[i:i + chunk_size]
                 for station_id in chunk_station_ids:
@@ -44,13 +46,14 @@ class DataFetcher_T:
                     all_data.append(row)
 
         df = pd.DataFrame(all_data, columns=headers)
-        print(f"Data fetching and saving completed. Data saved to DataFrame.")
+        print(f"Data fetching and saving completed using ThreadPoolExecutor. Data saved to DataFrame.")
         return df
 
 
 class DataFetcher_A:
     @staticmethod
     async def fetch_data_from_url(session, url):
+        """Fetch data asynchronously using aiohttp."""
         async with session.get(url) as response:
             data = []
             if response.status == 200:
@@ -63,9 +66,8 @@ class DataFetcher_A:
 
     @staticmethod
     async def fetch_and_save_to_dataframe(station_ids, chunk_size=100):
+        """Fetch data asynchronously using asyncio and aiohttp, then save to DataFrame."""
         all_data = []
-        
-        # Prepare the headers for the DataFrame
         headers = ["ID", "YEAR", "Month", "ELEMENT"]
         for i in range(1, 32):
             headers.extend([f"VALUE{i}", f"MFLAG{i}", f"QFLAG{i}", f"SFLAG{i}"])
@@ -78,7 +80,7 @@ class DataFetcher_A:
                 chunk_station_ids = station_ids[i:i + chunk_size]
                 for station_id in chunk_station_ids:
                     url = f"https://www.ncei.noaa.gov/pub/data/ghcn/daily/all/{station_id}.dly"
-                    task = asyncio.create_task(DataFetcher.fetch_data_from_url(session, url))
+                    task = asyncio.create_task(DataFetcher_A.fetch_data_from_url(session, url))
                     tasks.append(task)
             
             # Gather results and process them
@@ -92,8 +94,15 @@ class DataFetcher_A:
                     all_data.append(row)
 
         df = pd.DataFrame(all_data, columns=headers)
-        print(f"Data fetching and saving completed. Data saved to DataFrame.")
+        print(f"Data fetching and saving completed using asyncio. Data saved to DataFrame.")
         return df
 
-# To run the asynchronous method:
-# asyncio.run(DataFetcher.fetch_and_save_to_dataframe(station_ids))
+
+# To use ThreadPoolExecutor (TPE):
+# You can call this method like:
+# df_tpe = DataFetcher_T.save_to_dataframe(station_ids)
+
+# To use Asyncio:
+# You can call this method like:
+# df_asyncio = asyncio.run(DataFetcher_A.fetch_and_save_to_dataframe(station_ids))
+
