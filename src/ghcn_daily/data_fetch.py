@@ -48,8 +48,6 @@ class DataFetcher_T:
         return df
 
 
-
-
 class DataFetcher_A:
     @staticmethod
     async def fetch_data_from_url(session, url):
