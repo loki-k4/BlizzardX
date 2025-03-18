@@ -1,5 +1,3 @@
-Here's the updated version of your README for the `config` folder, with a focus on clarity and accuracy:
-
 ---
 
 # `config` Folder - Configuration Management
@@ -11,7 +9,7 @@ This folder contains the `ConfigManager` class, which is responsible for managin
 ```
 src/config
     __init__.py            # Initialize the config module
-    configmanager.py              # Contains the ConfigManager class for loading and retrieving configurations
+    configmanager.py       # Contains the ConfigManager class for loading and retrieving configurations
     urls.json              # Example config file containing URLs and other settings (you can add your own)
 ```
 
@@ -19,7 +17,7 @@ src/config
 
 ### 1. Initialize `ConfigManager`
 
-Import the `ConfigManager` class and initialize it. Optionally, you can specify the directory where your configuration files are stored (the default is `"config"`):
+Import the `ConfigManager` class and initialize it. Optionally, you can specify the directory where your configuration files are stored (the default is `"configmanager"`):
 
 ```python
 from src.config.configmanager import ConfigManager
