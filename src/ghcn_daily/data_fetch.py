@@ -33,7 +33,7 @@ class DataFetcher_T:
                 chunk_station_ids = station_ids[i:i + chunk_size]
                 for station_id in chunk_station_ids:
                     url = f"https://www.ncei.noaa.gov/pub/data/ghcn/daily/all/{station_id}.dly"
-                    futures.append(executor.submit(DataFetcher_T.read_data_from_url, url))
+                    futures.append(executor.submit(DataFetcher_T.data_from_url, url))
 
             # Process the results as they come in
             for future in futures:
