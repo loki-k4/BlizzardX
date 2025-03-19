@@ -11,7 +11,7 @@ class DataFetcher:
     def __init__(self, cpu_config):
         # Pass the 'cpu_config' directly to the CPUManager
         self.cpu_manager = CPUManager(cpu_config)
-        self.cpu_manager.start_cpu_monitoring()
+        self.cpu_manager.monitor_cpu_usage()
 
     @staticmethod
     def data_from_url(url):
