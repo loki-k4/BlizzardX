@@ -22,9 +22,14 @@ class ConfigManager:
             if file.endswith(".json"):
                 self.load_config(file)
 
-    def get(self, config_file, key):
+    def get(self, config_file, key, default=None):
         config = self.config_data.get(config_file, {})
-        return config.get(key, None)
+        keys = key.split(".")
+        for k in keys:
+            config = config.get(k, {})
+            if not config:
+                return default
+        return config if config else default
 
     def list_loaded_configs(self):
         return list(self.config_data.keys())

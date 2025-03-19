@@ -1,57 +1,43 @@
-# `config` Folder - Configuration Management
+## ConfigManager Usage
 
-This folder contains the `ConfigManager` class, which is responsible for managing and loading configuration files in JSON format. These configuration files can store various settings, such as URLs or other project-specific values.
+The `ConfigManager` class allows you to load and manage configuration data from JSON files. It supports loading a single configuration file or all JSON files from a specified directory. The configuration data can be accessed using dot notation for nested keys.
 
-## Directory Structure
+### Setup
 
-```
-src/config
-    __init__.py            # Initialize the config module
-    configmanager.py       # Contains the ConfigManager class for loading and retrieving configurations
-    urls.json              # Example config file containing URLs and other settings (you can add your own)
-```
+1. **Initialization**:
+   - Create an instance of the `ConfigManager` by specifying the `config_directory` where your JSON files are stored (default is `"config"`).
 
-## Usage of `ConfigManager`
+   ```python
+   config_manager = ConfigManager(config_directory="src/config")
+   ```
 
-### 1. Initialize `ConfigManager`
+2. **Loading a Configuration File**:
+   - Use `load_config()` to load a specific configuration file (e.g., `settings.json`).
+   
+   ```python
+   config_manager.load_config("settings.json")
+   ```
 
-Import the `ConfigManager` class and initialize it. Optionally, you can specify the directory where your configuration files are stored (the default is `"config"`):
+3. **Loading All Configuration Files**:
+   - Use `load_all_configs()` to automatically load all JSON files in the specified `config_directory`.
 
-```python
-from src.config.configmanager import ConfigManager
+   ```python
+   config_manager.load_all_configs()
+   ```
 
-# Initialize with the default config directory
-config_manager = ConfigManager(config_directory="src/config")
-```
+4. **Accessing Configuration Data**:
+   - Use the `get()` method to retrieve a specific value. You can use dot notation for nested keys (e.g., `"cpu_config.cpu_usage_limit"`).
+   - Optionally, you can provide a default value if the key doesn't exist.
+   
+   ```python
+   cpu_usage_limit = config_manager.get("settings.json", "cpu_config.cpu_usage_limit", default=85)
+   print(cpu_usage_limit)
+   ```
 
-### 2. Load Configuration Files
-
-Use the `load_all_configs()` method to load all `.json` configuration files in the specified directory:
-
-```python
-config_manager.load_all_configs()
-```
-
-This method will automatically load any `.json` files found in the directory and store them for later access.
-
-### 3. Retrieve Configuration Values
-
-Once the configurations are loaded, use the `get()` method to retrieve specific values. Pass the configuration file name (e.g., `"urls.json"`) and the key you wish to access (e.g., `"inventory"`):
-
-```python
-# Retrieve URLs from the urls.json file
-inventory_url = config_manager.get("urls.json", "inventory")
-stations_url = config_manager.get("urls.json", "stations")
-countries_url = config_manager.get("urls.json", "countries")
-states_url = config_manager.get("urls.json", "states")
-state_raw_url = config_manager.get("urls.json", "state_raw")
-```
-
-### 4. List Loaded Config Files
-
-To see all the configuration files that have been successfully loaded, you can use the `list_loaded_configs()` method:
-
-```python
-# List all loaded config files
-print("Loaded Configurations:", config_manager.list_loaded_configs())
-```
+5. **List Loaded Config Files**:
+   - Use `list_loaded_configs()` to see a list of all the configuration files that have been loaded.
+   
+   ```python
+   print(config_manager.list_loaded_configs())
+   ```
+---
