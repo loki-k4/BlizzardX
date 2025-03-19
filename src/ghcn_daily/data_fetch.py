@@ -10,7 +10,7 @@ from .cpu_management import CPUManager
 class DataFetcher:
     def __init__(self, config):
         self.config = config
-        self.cpu_manager = CPUManager(config["cpu_config"])
+        self.cpu_manager = CPUManager(**config["cpu_config"])
         self.cpu_manager.start_cpu_monitoring()
 
     @staticmethod
