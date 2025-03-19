@@ -6,7 +6,6 @@ import pandas as pd
 from tqdm import tqdm
 from .data_processing import DataProcessor  # Ensure that this is correctly imported
 
-
 class DataFetcher:
     def __init__(self, async_fetch=True, max_workers=5, chunk_size=10):
         """
@@ -85,7 +84,7 @@ class DataFetcher:
         results = list(self.executor.map(DataProcessor.process_data, data))
         return results
 
-    def save_to_dataframe(self, station_ids):
+    async def save_to_dataframe(self, station_ids):
         """Fetch data either synchronously or asynchronously and save it to a DataFrame."""
         all_data = []
         headers = ["ID", "YEAR", "Month", "ELEMENT"]
@@ -97,9 +96,8 @@ class DataFetcher:
 
         if self.async_fetch:
             # Fetch data asynchronously for each chunk
-            loop = asyncio.get_event_loop()
             for chunk in tqdm(chunks, desc="Fetching Data", ncols=100):
-                df_chunk = loop.run_until_complete(self.fetch_all_data(chunk))
+                df_chunk = await self.fetch_all_data(chunk)
                 all_data.extend(df_chunk.values.tolist())  # Add the data to the final list
         else:
             # Fetch data synchronously in chunks
