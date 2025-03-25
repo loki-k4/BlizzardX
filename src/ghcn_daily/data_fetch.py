@@ -1,37 +1,29 @@
 import asyncio
 import aiohttp
 import requests
-from concurrent.futures import ThreadPoolExecutor
-import psutil
 import pandas as pd
+import os
+import csv
 from tqdm import tqdm
-import threading
-from src.config.config_manager import ConfigManager  
+from src.config.config_manager import ConfigManager
+from src.ghcn_daily.data_parsing import DataParser
+from src.ghcn_daily.cpu_management import CPUMonitor  # Import CPUMonitor
 
 
 class DataFetcher:
-    def __init__(self, config_file='settings.json', config_directory="/workspaces/BlizzardX/src/config"):
-        # Initialize ConfigManager
+    def __init__(self, config_file='settings.json', config_directory="/workspaces/BlizzardX/src/config",data_type=None):
         self.config_manager = ConfigManager(config_directory)
-        
-        # Load the relevant configuration
         self.config_manager.load_config(config_file)
-        
-        # Retrieve CPU configuration from the loaded config
         cpu_config = self.config_manager.get(config_file, 'cpu_config', {})
-        
-        # Load async_fetch from the cpu_config section
-        self.async_fetch = cpu_config.get('async_fetch', True)  # Default to True if not found
-        self.cpu_usage_limit = cpu_config.get('cpu_usage_limit', 85)
-        self.max_workers = cpu_config.get('max_concurrent_workers', 12)
-        self.max_processes = cpu_config.get('max_concurrent_processes', 6)
-        self.cpu_check_interval = cpu_config.get('cpu_check_interval', 2)
+        self.async_fetch = cpu_config.get('async_fetch', True)
         self.chunk_size = cpu_config.get('chunk_size', 100)
-        self.dynamic_worker_adjustment = cpu_config.get('dynamic_worker_adjustment', True)
-
-        # Create a ThreadPoolExecutor for CPU-bound operations
-        self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
-        self.workers = self.max_workers
+        self.dynamic_worker_adjustment = cpu_config.get('dynamic_worker_adjustment', True)  # New config option: 'csv' or 'dataframe'
+        self.data_parser = DataParser()
+        self.cpu_monitor = CPUMonitor(config_file=config_file, config_directory=config_directory)
+        if data_type is not None:
+            self.data_type = data_type
+        else:
+            self.data_type = self.config_manager.get(config_file, 'data_type', 'csv')
 
     def data_from_url(self, url):
         """Fetch data synchronously using requests."""
@@ -39,11 +31,11 @@ class DataFetcher:
         response = requests.get(url)
         if response.status_code == 200:
             for line in response.text.splitlines():
-                data.append(self.parse_data(line))  # Directly parsing the data without processing
+                data.append(self.data_parser.parse_data_dly(line))
         else:
             print(f"Failed to retrieve data for {url}. Status code: {response.status_code}")
         return data
-    
+
     async def fetch_data_from_url(self, session, url):
         """Fetch data asynchronously using aiohttp."""
         data = []
@@ -52,29 +44,12 @@ class DataFetcher:
                 if response.status == 200:
                     text = await response.text()
                     for line in text.splitlines():
-                        data.append(self.parse_data(line))  # Directly parsing the data without processing
+                        data.append(self.data_parser.parse_data_dly(line))
                 else:
                     print(f"Failed to retrieve data for {url}. Status code: {response.status}")
         except Exception as e:
             print(f"Error fetching data from {url}: {e}")
         return data
-
-    def parse_data(self, line):
-        """Parse a single line of data into a dictionary."""
-        data = []
-        for i in range(21, 269, 8):
-            value = int(line[i:i+5])
-            mflag = line[i+5]
-            qflag = line[i+6]
-            sflag = line[i+7]
-            data.extend([value, mflag, qflag, sflag])
-        return {
-            "ID": line[0:11].strip(),
-            "YEAR": int(line[11:15]),
-            "Month": int(line[15:17]),
-            "ELEMENT": line[17:21].strip(),
-            "DATA": data
-        }
 
     async def fetch_all_data(self, station_ids):
         """Fetch all data asynchronously for the given station_ids."""
@@ -83,84 +58,105 @@ class DataFetcher:
         for i in range(1, 32):
             headers.extend([f"VALUE{i}", f"MFLAG{i}", f"QFLAG{i}", f"SFLAG{i}"])
 
-        # Using aiohttp to fetch data asynchronously
         async with aiohttp.ClientSession() as session:
             tasks = []
             for station_id in station_ids:
                 url = f"https://www.ncei.noaa.gov/pub/data/ghcn/daily/all/{station_id}.dly"
                 tasks.append(self.fetch_data_from_url(session, url))
 
-            # Wait for all tasks to complete
             results = await asyncio.gather(*tasks)
 
-            # Process the results as they come in
             for result in results:
                 for entry in result:
                     row = [entry["ID"], entry["YEAR"], entry["Month"], entry["ELEMENT"]]
                     row.extend(entry["DATA"])
                     all_data.append(row)
 
-        # Convert to DataFrame
-        df = pd.DataFrame(all_data, columns=headers)
-        return df
+        return all_data
 
-    def monitor_cpu_usage(self):
-        """Monitors CPU usage and dynamically adjusts the number of workers based on usage."""
-        while True:
-            cpu_usage = psutil.cpu_percent(interval=self.cpu_check_interval)
-            if cpu_usage > self.cpu_usage_limit:
-                self.decrease_workers()
+    def fetch_all_data_sync(self, station_ids):
+        """Fetch all data synchronously for the given station_ids."""
+        all_data = []
+        for station_id in station_ids:
+            url = f"https://www.ncei.noaa.gov/pub/data/ghcn/daily/all/{station_id}.dly"
+            data_chunk = self.data_from_url(url)
+            for entry in data_chunk:
+                row = [entry["ID"], entry["YEAR"], entry["Month"], entry["ELEMENT"]]
+                row.extend(entry["DATA"])
+                all_data.append(row)
+
+        return all_data
+
+    async def save_to_csv_incrementally(self, station_ids, output_filename, async_fetch=None):
+        """Fetch data either synchronously or asynchronously and save it to a CSV file incrementally after each chunk."""
+        if async_fetch is None:
+            async_fetch = self.async_fetch  # Default to config value if not passed
+
+        headers = ["ID", "YEAR", "Month", "ELEMENT"]
+        for i in range(1, 32):
+            headers.extend([f"VALUE{i}", f"MFLAG{i}", f"QFLAG{i}", f"SFLAG{i}"])
+        os.makedirs(os.path.dirname(output_filename), exist_ok=True)
+        with open(output_filename, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(headers) 
+            chunks = [station_ids[i:i + self.chunk_size] for i in range(0, len(station_ids), self.chunk_size)]
+            # Start CPU monitoring if dynamic worker adjustment is enabled
+            if self.dynamic_worker_adjustment:
+                self.cpu_monitor.start_cpu_monitoring()
+            if async_fetch:
+                # Fetch and write data asynchronously for each chunk
+                for chunk in tqdm(chunks, desc="Fetching Data", ncols=100):
+                    data_chunk = await self.fetch_all_data(chunk)
+                    # Write each row of the data chunk to the CSV
+                    for row in data_chunk:
+                        writer.writerow(row)
             else:
-                self.increase_workers()
+                # Fetch and write data synchronously in chunks
+                for chunk in tqdm(chunks, desc="Fetching Data", ncols=100):
+                    data_chunk = self.fetch_all_data_sync(chunk)
+                    # Write each row of the data chunk to the CSV
+                    for row in data_chunk:
+                        writer.writerow(row)
 
-    def decrease_workers(self):
-        """Decrease the number of workers if CPU usage is too high."""
-        if self.workers > 2:  # Ensure there's at least one worker
-            self.workers -= 2
-            self.executor._max_workers = self.workers
-            print(f"CPU usage is high! Decreasing workers to {self.workers}")
+        print(f"Data fetching and saving completed. Data saved to {output_filename}")
 
-    def increase_workers(self):
-        """Increase the number of workers if CPU usage is low enough."""
-        if self.workers < self.max_workers:
-            self.workers += 2
-            self.executor._max_workers = self.workers
-            print(f"CPU usage is stable. Increasing workers to {self.workers}")
-
-    async def save_to_dataframe(self, station_ids):
-        """Fetch data either synchronously or asynchronously and save it to a DataFrame."""
+    async def save_to_dataframe_incrementally(self, station_ids):
+        """Fetch data either synchronously or asynchronously and return it as a DataFrame incrementally."""
         all_data = []
         headers = ["ID", "YEAR", "Month", "ELEMENT"]
         for i in range(1, 32):
             headers.extend([f"VALUE{i}", f"MFLAG{i}", f"QFLAG{i}", f"SFLAG{i}"])
 
-        # Chunk the station IDs into smaller chunks
         chunks = [station_ids[i:i + self.chunk_size] for i in range(0, len(station_ids), self.chunk_size)]
 
-        # Start CPU monitoring in a separate thread if dynamic worker adjustment is enabled
         if self.dynamic_worker_adjustment:
-            cpu_monitor_thread = threading.Thread(target=self.monitor_cpu_usage)
-            cpu_monitor_thread.daemon = True
-            cpu_monitor_thread.start()
+            self.cpu_monitor.start_cpu_monitoring()
 
         if self.async_fetch:
             # Fetch data asynchronously for each chunk
             for chunk in tqdm(chunks, desc="Fetching Data", ncols=100):
-                df_chunk = await self.fetch_all_data(chunk)
-                all_data.extend(df_chunk.values.tolist())  # Add the data to the final list
+                data_chunk = await self.fetch_all_data(chunk)
+                all_data.extend(data_chunk)
         else:
-            # Fetch data synchronously in chunks
+            # Fetch data synchronously for each chunk
             for chunk in tqdm(chunks, desc="Fetching Data", ncols=100):
-                for station_id in chunk:
-                    url = f"https://www.ncei.noaa.gov/pub/data/ghcn/daily/all/{station_id}.dly"
-                    chunk_data = self.data_from_url(url)
-                    for entry in chunk_data:
-                        row = [entry["ID"], entry["YEAR"], entry["Month"], entry["ELEMENT"]]
-                        row.extend(entry["DATA"])
-                        all_data.append(row)
+                data_chunk = self.fetch_all_data_sync(chunk)
+                all_data.extend(data_chunk)
 
         # Convert to DataFrame
         df = pd.DataFrame(all_data, columns=headers)
-        print(f"Data fetching and saving completed. Data saved to DataFrame.")
-        
         return df
+
+    async def save_data(self, station_ids):
+        """Determine whether to save the data to CSV or DataFrame based on the configuration."""
+        # Set the output filename to 'station_data.csv'
+        output_directory = "/workspaces/BlizzardX/Data"
+        output_filename = os.path.join(output_directory, "station_data.csv")  # Fixed name 'station_data.csv'
+
+        if self.data_type == 'csv':
+            await self.save_to_csv_incrementally(station_ids, output_filename)
+        elif self.data_type == 'dataframe':
+            df = await self.save_to_dataframe_incrementally(station_ids)
+            return df
+        else:
+            print(f"Invalid data_type '{self.data_type}' specified in config.")

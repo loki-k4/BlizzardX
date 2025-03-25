@@ -1,17 +1,13 @@
-// This file contains the configuration settings for the application.
-// The settings are used to configure the CPU usage, data sources, and other application settings.
-// The settings are loaded by the application at startup and are used to configure the application.
-// The settings are stored in a JSON format and are loaded by the application using the JSON parser.
-// The settings are used to configure the application and are used to set the CPU usage, data sources, and other application settings.
 {
     "cpu_config": {
         "async_fetch": true,
-        "cpu_usage_limit": 85,
-        "max_concurrent_workers": 12,
-        "max_concurrent_processes": 6,
-        "cpu_check_interval": 2,
-        "chunk_size": 100,
-        "dynamic_worker_adjustment": true
+        "cpu_usage_limit": 70,
+        "max_concurrent_workers": 6,
+        "max_concurrent_processes": 3,
+        "cpu_check_interval": 3,
+        "chunk_size": 10,
+        "dynamic_worker_adjustment": true,
+        "data_type": "csv"
     },
     
     "data_sources": {
