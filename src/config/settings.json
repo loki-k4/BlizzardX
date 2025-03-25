@@ -1,5 +1,11 @@
+// This file contains the configuration settings for the application.
+// The settings are used to configure the CPU usage, data sources, and other application settings.
+// The settings are loaded by the application at startup and are used to configure the application.
+// The settings are stored in a JSON format and are loaded by the application using the JSON parser.
+// The settings are used to configure the application and are used to set the CPU usage, data sources, and other application settings.
 {
     "cpu_config": {
+        "async_fetch": true,
         "cpu_usage_limit": 85,
         "max_concurrent_workers": 12,
         "max_concurrent_processes": 6,
@@ -7,6 +13,7 @@
         "chunk_size": 100,
         "dynamic_worker_adjustment": true
     },
+    
     "data_sources": {
         "inventory": "https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt",
         "stations": "https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt",

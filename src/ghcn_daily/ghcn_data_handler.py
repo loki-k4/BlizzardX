@@ -1,5 +1,5 @@
 from .data_parsing import DataParser
-from .data_fetching import DataFetcher
+from .data_fetch import DataFetcher
 import pandas as pd
 
 class GHCNDataHandler:

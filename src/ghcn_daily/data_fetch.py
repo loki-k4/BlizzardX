@@ -6,7 +6,6 @@ import psutil
 import pandas as pd
 from tqdm import tqdm
 import threading
-from concurrent.futures import ThreadPoolExecutor
 from src.config.config_manager import ConfigManager  
 
 
@@ -18,12 +17,17 @@ class DataFetcher:
         # Load the relevant configuration
         self.config_manager.load_config(config_file)
         
-        # Now retrieve settings from the loaded config
-        self.async_fetch = self.config_manager.get(config_file, 'async_fetch', True)  # Default to True
-        self.max_workers = self.config_manager.get(config_file, 'max_workers', 5)
-        self.chunk_size = self.config_manager.get(config_file, 'chunk_size', 10)
-        self.cpu_usage_limit = self.config_manager.get(config_file, 'cpu_usage_limit', 80)
-        self.cpu_check_interval = self.config_manager.get(config_file, 'cpu_check_interval', 2)
+        # Retrieve CPU configuration from the loaded config
+        cpu_config = self.config_manager.get(config_file, 'cpu_config', {})
+        
+        # Load async_fetch from the cpu_config section
+        self.async_fetch = cpu_config.get('async_fetch', True)  # Default to True if not found
+        self.cpu_usage_limit = cpu_config.get('cpu_usage_limit', 85)
+        self.max_workers = cpu_config.get('max_concurrent_workers', 12)
+        self.max_processes = cpu_config.get('max_concurrent_processes', 6)
+        self.cpu_check_interval = cpu_config.get('cpu_check_interval', 2)
+        self.chunk_size = cpu_config.get('chunk_size', 100)
+        self.dynamic_worker_adjustment = cpu_config.get('dynamic_worker_adjustment', True)
 
         # Create a ThreadPoolExecutor for CPU-bound operations
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
@@ -133,10 +137,11 @@ class DataFetcher:
         # Chunk the station IDs into smaller chunks
         chunks = [station_ids[i:i + self.chunk_size] for i in range(0, len(station_ids), self.chunk_size)]
 
-        # Start CPU monitoring in a separate thread
-        cpu_monitor_thread = threading.Thread(target=self.monitor_cpu_usage)
-        cpu_monitor_thread.daemon = True
-        cpu_monitor_thread.start()
+        # Start CPU monitoring in a separate thread if dynamic worker adjustment is enabled
+        if self.dynamic_worker_adjustment:
+            cpu_monitor_thread = threading.Thread(target=self.monitor_cpu_usage)
+            cpu_monitor_thread.daemon = True
+            cpu_monitor_thread.start()
 
         if self.async_fetch:
             # Fetch data asynchronously for each chunk
