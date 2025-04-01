@@ -18,9 +18,6 @@ class FeatureEngineering:
         self.df['Day_of_Week'] = self.df['DATE'].dt.dayofweek  # 0=Monday, 6=Sunday
         self.df['Day_of_Year'] = self.df['DATE'].dt.dayofyear  # 1=Jan 1st, 365=Dec 31st
         
-        # Map numerical season values to season names
-        season_mapping = {1: 'Winter', 2: 'Spring', 3: 'Summer', 4: 'Fall'}
-        self.df['Season'] = self.df['Season'].map(season_mapping)
 
     def add_temperature_features(self):
         """Add features related to temperature (TMIN and TMAX)."""
@@ -83,4 +80,40 @@ class FeatureEngineering:
         # Round all columns with decimals to 2 places
         self.df = self.df.round(2)
 
+        return self.df
+class MissingValueImputation:
+    def __init__(self, df):
+        """Initialize with a dataframe."""
+        self.df = df
+
+    def fill_missing_values(self):
+        """Fill missing values using appropriate strategies."""
+        
+        # Time Series Features (e.g., Rolling and EWMA)
+        self.df['Rolling_Mean_TMIN_7'] = self.df['Rolling_Mean_TMIN_7'].fillna(method='ffill')  # Forward fill
+        self.df['Rolling_10thPercentile_TMIN_7'] = self.df['Rolling_10thPercentile_TMIN_7'].fillna(method='ffill')
+        self.df['TMIN_Rolling_30_Diff'] = self.df['TMIN_Rolling_30_Diff'].fillna(method='ffill')
+        self.df['EWMA_TMIN_7'] = self.df['EWMA_TMIN_7'].fillna(method='ffill')
+        self.df['Rolling_Max_TMIN_30'] = self.df['Rolling_Max_TMIN_30'].fillna(method='ffill')
+        self.df['Rolling_Min_TMIN_30'] = self.df['Rolling_Min_TMIN_30'].fillna(method='ffill')
+        self.df['EWMA_TMIN_30'] = self.df['EWMA_TMIN_30'].fillna(method='ffill')
+
+        # Lag Features (e.g., TMIN_Lag1)
+        self.df['TMIN_Lag1'] = self.df['TMIN_Lag1'].fillna(method='bfill')  # Backward fill
+
+        # Count Features (e.g., SnowyDays, Cumulative Snowfall)
+        self.df['SnowyDaysCount_7'] = self.df['SnowyDaysCount_7'].fillna(0)  # Fill with 0
+        self.df['Cumulative_SnowDepth_7'] = self.df['Cumulative_SnowDepth_7'].fillna(0)  # Fill with 0
+        self.df['Cumulative_Snowfall_Lag7'] = self.df['Cumulative_Snowfall_Lag7'].fillna(0)  # Fill with 0
+        self.df['SNWD_Lag1'] = self.df['SNWD_Lag1'].fillna(0)  # Fill with 0
+        self.df['SNWD_Lag2'] = self.df['SNWD_Lag2'].fillna(0)  # Fill with 0
+        self.df['Rolling_Sum_SNWD_7'] = self.df['Rolling_Sum_SNWD_7'].fillna(0)  # Fill with 0
+
+        # Continuous Features (e.g., SNWD, TMIN) using Mean Imputation
+        self.df['SNWD'] = self.df['SNWD'].fillna(self.df['SNWD'].mean())  # Fill with mean
+        self.df['TMIN'] = self.df['TMIN'].fillna(self.df['TMIN'].mean())  # Fill with mean
+        self.df['TMAX'] = self.df['TMAX'].fillna(self.df['TMAX'].mean())  # Fill with mean
+        self.df['PRCP'] = self.df['PRCP'].fillna(self.df['PRCP'].mean())  # Fill with mean
+
+        # Return the modified dataframe
         return self.df
