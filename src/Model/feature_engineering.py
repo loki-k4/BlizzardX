@@ -25,7 +25,6 @@ class FeatureEngineering:
     def add_temperature_features(self):
         """Add features related to temperature (TMIN and TMAX)."""
         self.df['Temp_Diff'] = self.df['TMAX'] - self.df['TMIN']  # Difference between TMAX and TMIN
-        self.df['Seasonal_TMIN_Deviation'] = self.df['TMIN'] - self.df.groupby('Season')['TMIN'].transform('mean')  # Deviation of TMIN from season mean
         
         # Rolling mean and percentile of TMIN
         self.df['Rolling_Mean_TMIN_7'] = self.df['TMIN'].rolling(window=7).mean()  # 7-day rolling mean of TMIN
@@ -36,7 +35,6 @@ class FeatureEngineering:
         self.df['EWMA_TMIN_7'] = self.df['TMIN'].ewm(span=7, adjust=False).mean()  # Exponentially Weighted Moving Average of TMIN (7 days)
         
         # Previous season TMIN and seasonal anomaly in TMIN
-        self.df['Previous_Season_TMIN'] = self.df.groupby('Season')['TMIN'].shift(1)  # Previous day's TMIN in the same season
         self.df['Seasonal_TMIN_Anomaly'] = self.df['TMIN'] - self.df.groupby([self.df['DATE'].dt.month, self.df['DATE'].dt.day])['TMIN'].transform('mean')  # Seasonal anomaly in TMIN
 
         
@@ -68,8 +66,6 @@ class FeatureEngineering:
         self.df['Cumulative_Precipitation_7'] = self.df['PRCP'].rolling(window=7).sum()  # Cumulative precipitation over the last 7 days
         self.df['Rolling_Sum_PRCP_14'] = self.df['PRCP'].rolling(window=14).sum()  # 14-day rolling sum of precipitation
         self.df['TMAX_PRCP_Interaction'] = self.df['TMAX'] * self.df['PRCP']  # Interaction term between maximum temperature and precipitation
-        self.df['Days_Since_Last_Precip'] = (self.df['DATE'] - self.df['DATE'][self.df['PRCP'] > 0].shift(1)).dt.days  # Days since last precipitation event
-
     def add_additional_features(self):
         """Add additional features such as interaction between TMIN and SNOW."""
         self.df['Rolling_Mean_TMIN_30'] = self.df['TMIN'].rolling(window=30).mean()  # 30-day rolling mean of TMIN
