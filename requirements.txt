@@ -16,4 +16,4 @@ lightgbm
 flask
 uvicorn
 fastapi
-
+aiohttp

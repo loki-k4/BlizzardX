@@ -196,7 +196,7 @@ class WeatherDataCleaner:
         self.df.loc[snow_zero_mask & ~prcp_zero_mask, 'SNOW'] = self.df['SNOW'].shift(1)
 
         # Fallback to next available snow value if still missing
-        self.df['SNOW'] = self.df['SNOW'].fillna(method='bfill').round(2)
+        self.df['SNOW'] = self.df['SNOW'].bfill().round(2)
 
     def fill_missing_prcp(self):
         """Fill missing PRCP values based on correlation with TMIN/TMAX."""
