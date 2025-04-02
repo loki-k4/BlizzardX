@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 
+import pandas as pd
+import numpy as np
+
 class FeatureEngineering:
     def __init__(self, df):
         """Initialize with a dataframe."""
@@ -13,107 +16,112 @@ class FeatureEngineering:
         self.df.rename(columns={'ID': 'Station_ID'}, inplace=True)
 
     def add_temporal_features(self):
-        self.df['DATE'] = pd.to_datetime(self.df['DATE'], errors='coerce')
         """Add temporal features based on the DATE column."""
-        self.df['Day_of_Week'] = self.df['DATE'].dt.dayofweek  # 0=Monday, 6=Sunday
-        self.df['Day_of_Year'] = self.df['DATE'].dt.dayofyear  # 1=Jan 1st, 365=Dec 31st
-        
+        self.df['DATE'] = pd.to_datetime(self.df['DATE'], errors='coerce')
+        self.df['Day_of_Week'] = self.df['DATE'].dt.dayofweek
+        self.df['Day_of_Year'] = self.df['DATE'].dt.dayofyear
 
-    def add_temperature_features(self):
-        """Add features related to temperature (TMIN and TMAX)."""
-        self.df['Temp_Diff'] = self.df['TMAX'] - self.df['TMIN']  # Difference between TMAX and TMIN
-        
-        # Rolling mean and percentile of TMIN
-        self.df['Rolling_Mean_TMIN_7'] = self.df['TMIN'].rolling(window=7).mean()  # 7-day rolling mean of TMIN
-        self.df['Rolling_10thPercentile_TMIN_7'] = self.df['TMIN'].rolling(window=7).apply(lambda x: np.percentile(x, 10), raw=True)  # 7-day rolling 10th percentile of TMIN
-        
-        # Other rolling statistics
-        self.df['TMIN_Rolling_30_Diff'] = self.df['TMIN'] - self.df['Rolling_Mean_TMIN_7']  # Difference between TMIN and 7-day rolling mean
-        self.df['EWMA_TMIN_7'] = self.df['TMIN'].ewm(span=7, adjust=False).mean()  # Exponentially Weighted Moving Average of TMIN (7 days)
-        
-        # Previous season TMIN and seasonal anomaly in TMIN
-        self.df['Seasonal_TMIN_Anomaly'] = self.df['TMIN'] - self.df.groupby([self.df['DATE'].dt.month, self.df['DATE'].dt.day])['TMIN'].transform('mean')  # Seasonal anomaly in TMIN
+    def add_temperature_features(self, station_df):
+        """Add temperature-related features within each station."""
+        station_df = station_df.sort_values(by='DATE')
+        station_df['Temp_Diff'] = station_df['TMAX'] - station_df['TMIN']
+        station_df['Rolling_Mean_TMIN_7'] = station_df['TMIN'].rolling(window=7, min_periods=1).mean()
+        station_df['Rolling_10thPercentile_TMIN_7'] = station_df['TMIN'].rolling(window=7, min_periods=1).apply(lambda x: np.percentile(x, 10), raw=True)
+        station_df['TMIN_Rolling_30_Diff'] = station_df['TMIN'] - station_df['Rolling_Mean_TMIN_7']
+        station_df['EWMA_TMIN_7'] = station_df['TMIN'].ewm(span=7, adjust=False).mean()
+        station_df['Seasonal_TMIN_Anomaly'] = station_df['TMIN'] - station_df.groupby([station_df['DATE'].dt.month, station_df['DATE'].dt.day])['TMIN'].transform('mean')
+        station_df['Rolling_Max_TMIN_30'] = station_df['TMIN'].rolling(window=30, min_periods=1).max()
+        station_df['Rolling_Min_TMIN_30'] = station_df['TMIN'].rolling(window=30, min_periods=1).min()
+        station_df['EWMA_TMIN_30'] = station_df['TMIN'].ewm(span=30, adjust=False).mean()
+        station_df['TMIN_Lag1'] = station_df['TMIN'].shift(1)
+        return station_df
 
-        
-        # Rolling max/min and EWMA for TMIN
-        self.df['Rolling_Max_TMIN_30'] = self.df['TMIN'].rolling(window=30).max()  # 30-day rolling max of TMIN
-        self.df['Rolling_Min_TMIN_30'] = self.df['TMIN'].rolling(window=30).min()  # 30-day rolling min of TMIN
-        self.df['EWMA_TMIN_30'] = self.df['TMIN'].ewm(span=30, adjust=False).mean()  # Exponentially Weighted Moving Average of TMIN (30 days)
-        
-        # Lag feature for TMIN
-        self.df['TMIN_Lag1'] = self.df['TMIN'].shift(1)  # 1-day lag feature for TMIN
+    def add_snow_features(self, station_df):
+        """Add snow-related features within each station."""
+        station_df = station_df.sort_values(by='DATE')
+        station_df['SnowyDay'] = (station_df['SNOW'] > 0).astype(int)
+        station_df['SnowyDaysCount_7'] = station_df['SNOW'].rolling(window=7, min_periods=1).apply(lambda x: (x > 0).sum(), raw=True)
+        station_df['Cumulative_SnowDepth_7'] = station_df['SNWD'].rolling(window=7, min_periods=1).sum()
+        station_df['Cumulative_Snowfall_Lag7'] = station_df['SNOW'].shift(7).rolling(window=7, min_periods=1).sum()
+        station_df['SNWD_Lag1'] = station_df['SNWD'].shift(1)
+        station_df['SNWD_Lag2'] = station_df['SNWD'].shift(2)
+        station_df['Rolling_Sum_SNWD_7'] = station_df['SNWD'].rolling(window=7, min_periods=1).sum()
+        station_df['SNWD_TMIN_Interaction'] = station_df['SNWD'] * station_df['TMIN']
+        station_df['Snowfall_Intensity'] = station_df['SNOW'] / (station_df['SNWD'] + 1)
+        station_df['SNWD_Snowfall_Diff'] = station_df['SNWD'] - station_df['Snowfall_Intensity']
+        return station_df
 
-    def add_snow_features(self):
-        """Add features related to snow (SNOW and SNWD)."""
-        self.df['SnowyDay'] = (self.df['SNOW'] > 0).astype(int)  # Flag indicating if snow was observed
-        self.df['SnowyDaysCount_7'] = self.df['SNOW'].rolling(window=7).apply(lambda x: (x > 0).sum(), raw=True)  # Count of snowy days in the last 7 days
-        self.df['Cumulative_SnowDepth_7'] = self.df['SNWD'].rolling(window=7).sum()  # Cumulative snow depth over the last 7 days
-        self.df['Cumulative_Snowfall_Lag7'] = self.df['SNOW'].shift(7).rolling(window=7).sum()  # Cumulative snowfall in the last 7 days
-        self.df['SNWD_Lag1'] = self.df['SNWD'].shift(1)  # 1-day lag feature for snow depth
-        self.df['SNWD_Lag2'] = self.df['SNWD'].shift(2)  # 2-day lag feature for snow depth
-        self.df['Rolling_Sum_SNWD_7'] = self.df['SNWD'].rolling(window=7).sum()  # 7-day rolling sum of snow depth
-        self.df['SNWD_TMIN_Interaction'] = self.df['SNWD'] * self.df['TMIN']  # Interaction term between snow depth and TMIN
-        self.df['Snowfall_Intensity'] = self.df['SNOW'] / (self.df['SNWD'] + 1)  # Snowfall intensity (to avoid division by zero)
-        self.df['SNWD_Snowfall_Diff'] = self.df['SNWD'] - self.df['Snowfall_Intensity']  # Difference between snow depth and snowfall intensity
+    def add_precipitation_features(self, station_df):
+        """Add precipitation-related features within each station."""
+        station_df = station_df.sort_values(by='DATE')
+        station_df['PRCP_Lag1'] = station_df['PRCP'].shift(1)
+        station_df['PRCP_Lag2'] = station_df['PRCP'].shift(2)
+        station_df['Cumulative_Precipitation_7'] = station_df['PRCP'].rolling(window=7, min_periods=1).sum()
+        station_df['Rolling_Sum_PRCP_14'] = station_df['PRCP'].rolling(window=14, min_periods=1).sum()
+        station_df['TMAX_PRCP_Interaction'] = station_df['TMAX'] * station_df['PRCP']
+        return station_df
 
-    def add_precipitation_features(self):
-        """Add features related to precipitation (PRCP)."""
-        self.df['PRCP_Lag1'] = self.df['PRCP'].shift(1)  # 1-day lag feature for precipitation
-        self.df['PRCP_Lag2'] = self.df['PRCP'].shift(2)  # 2-day lag feature for precipitation
-        self.df['Cumulative_Precipitation_7'] = self.df['PRCP'].rolling(window=7).sum()  # Cumulative precipitation over the last 7 days
-        self.df['Rolling_Sum_PRCP_14'] = self.df['PRCP'].rolling(window=14).sum()  # 14-day rolling sum of precipitation
-        self.df['TMAX_PRCP_Interaction'] = self.df['TMAX'] * self.df['PRCP']  # Interaction term between maximum temperature and precipitation
-    def add_additional_features(self):
-        """Add additional features such as interaction between TMIN and SNOW."""
-        self.df['Rolling_Mean_TMIN_30'] = self.df['TMIN'].rolling(window=30).mean()  # 30-day rolling mean of TMIN
-        self.df['TMIN_SNOW_Interaction'] = self.df['TMIN'] * self.df['SNOW']  # Interaction term between TMIN and SNOW
+    def add_additional_features(self, station_df):
+        """Add additional station-specific features."""
+        station_df['Rolling_Mean_TMIN_30'] = station_df['TMIN'].rolling(window=30, min_periods=1).mean()
+        station_df['TMIN_SNOW_Interaction'] = station_df['TMIN'] * station_df['SNOW']
+        return station_df
+    
+    def handle_nulls(self, station_df):
+        """Handle null values appropriately for each station."""
+        station_df = station_df.sort_values(by='DATE')
 
+        # Fill forward for lag features, then fill remaining with station-wise mean
+        lag_features = ['TMIN_Lag1', 'SNWD_Lag1', 'SNWD_Lag2', 'PRCP_Lag1', 'PRCP_Lag2', 'Cumulative_Snowfall_Lag7']
+        station_df[lag_features] = station_df[lag_features].ffill().fillna(station_df[lag_features].mean())
+
+        # Fill rolling and cumulative features with station-wise mean
+        rolling_features = ['Rolling_Mean_TMIN_7', 'Rolling_10thPercentile_TMIN_7', 'Rolling_Mean_TMIN_30',
+                            'Cumulative_SnowDepth_7', 'Cumulative_Precipitation_7', 'Rolling_Sum_PRCP_14']
+        station_df[rolling_features] = station_df[rolling_features].fillna(station_df[rolling_features].mean())
+
+        # Fill interaction terms with 0
+        interaction_features = ['TMIN_SNOW_Interaction', 'TMAX_PRCP_Interaction', 'SNWD_TMIN_Interaction']
+        station_df[interaction_features] = station_df[interaction_features].fillna(0)
+
+        return station_df
+    
     def apply_all_features(self):
-        """Apply all feature engineering steps."""
+        """Apply all feature engineering steps station-wise."""
         self.add_station_features()
         self.add_temporal_features()
-        self.add_temperature_features()
-        self.add_snow_features()
-        self.add_precipitation_features()
-        self.add_additional_features()
-        
-        # Round all columns with decimals to 2 places
-        self.df = self.df.round(2)
+
+        # Apply station-wise transformations
+        self.df = self.df.groupby('Station_ID', group_keys=False).apply(self.add_temperature_features)
+        self.df = self.df.groupby('Station_ID', group_keys=False).apply(self.add_snow_features)
+        self.df = self.df.groupby('Station_ID', group_keys=False).apply(self.add_precipitation_features)
+        self.df = self.df.groupby('Station_ID', group_keys=False).apply(self.add_additional_features)
+        self.df = self.df.groupby('Station_ID', group_keys=False).apply(self.handle_nulls)
+
+        # Exclude LATITUDE and LONGITUDE from rounding
+        cols_to_exclude = ['LATITUDE', 'LONGITUDE']
+        cols_to_round = [col for col in self.df.columns if col not in cols_to_exclude]
+        self.df[cols_to_round] = self.df[cols_to_round].round(2)
 
         return self.df
-class MissingValueImputation:
+    
+class ColdEventDetector:
     def __init__(self, df):
         """Initialize with a dataframe."""
         self.df = df
 
-    def fill_missing_values(self):
-        """Fill missing values using appropriate strategies."""
-        
-        # Time Series Features (e.g., Rolling and EWMA)
-        self.df['Rolling_Mean_TMIN_7'] = self.df['Rolling_Mean_TMIN_7'].fillna(method='ffill')  # Forward fill
-        self.df['Rolling_10thPercentile_TMIN_7'] = self.df['Rolling_10thPercentile_TMIN_7'].fillna(method='ffill')
-        self.df['TMIN_Rolling_30_Diff'] = self.df['TMIN_Rolling_30_Diff'].fillna(method='ffill')
-        self.df['EWMA_TMIN_7'] = self.df['EWMA_TMIN_7'].fillna(method='ffill')
-        self.df['Rolling_Max_TMIN_30'] = self.df['Rolling_Max_TMIN_30'].fillna(method='ffill')
-        self.df['Rolling_Min_TMIN_30'] = self.df['Rolling_Min_TMIN_30'].fillna(method='ffill')
-        self.df['EWMA_TMIN_30'] = self.df['EWMA_TMIN_30'].fillna(method='ffill')
+    def define_cold_event(self, station_df):
+        """Identify cold events based on temperature thresholds and anomalies within each station."""
+        station_df['Cold_Event'] = (
+            (station_df['TMIN'] < station_df['Rolling_10thPercentile_TMIN_7']) |  
+            (station_df['TMIN_Rolling_30_Diff'] < station_df['TMIN_Rolling_30_Diff'].quantile(0.1)) |  
+            (station_df['Seasonal_TMIN_Anomaly'] < station_df['Seasonal_TMIN_Anomaly'].quantile(0.1))
+        ).astype(int)  
 
-        # Lag Features (e.g., TMIN_Lag1)
-        self.df['TMIN_Lag1'] = self.df['TMIN_Lag1'].fillna(method='bfill')  # Backward fill
+        return station_df
 
-        # Count Features (e.g., SnowyDays, Cumulative Snowfall)
-        self.df['SnowyDaysCount_7'] = self.df['SnowyDaysCount_7'].fillna(0)  # Fill with 0
-        self.df['Cumulative_SnowDepth_7'] = self.df['Cumulative_SnowDepth_7'].fillna(0)  # Fill with 0
-        self.df['Cumulative_Snowfall_Lag7'] = self.df['Cumulative_Snowfall_Lag7'].fillna(0)  # Fill with 0
-        self.df['SNWD_Lag1'] = self.df['SNWD_Lag1'].fillna(0)  # Fill with 0
-        self.df['SNWD_Lag2'] = self.df['SNWD_Lag2'].fillna(0)  # Fill with 0
-        self.df['Rolling_Sum_SNWD_7'] = self.df['Rolling_Sum_SNWD_7'].fillna(0)  # Fill with 0
-
-        # Continuous Features (e.g., SNWD, TMIN) using Mean Imputation
-        self.df['SNWD'] = self.df['SNWD'].fillna(self.df['SNWD'].mean())  # Fill with mean
-        self.df['TMIN'] = self.df['TMIN'].fillna(self.df['TMIN'].mean())  # Fill with mean
-        self.df['TMAX'] = self.df['TMAX'].fillna(self.df['TMAX'].mean())  # Fill with mean
-        self.df['PRCP'] = self.df['PRCP'].fillna(self.df['PRCP'].mean())  # Fill with mean
-
-        # Return the modified dataframe
+    def apply_cold_event_detection(self):
+        """Apply cold event detection station-wise."""
+        self.df = self.df.groupby('Station_ID', group_keys=False).apply(self.define_cold_event)
         return self.df
+
