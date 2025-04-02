@@ -17,3 +17,6 @@ flask
 uvicorn
 fastapi
 aiohttp
+statsmodels
+prophet
+ipywidgets
