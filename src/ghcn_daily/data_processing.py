@@ -122,154 +122,242 @@ class WeatherDataProcessor:
 
         return final_df
 
+
 class WeatherDataCleaner:
     def __init__(self, df):
-        self.df = df
+        self.df = df.copy()
         self.station_correlations = {}
+        required_cols = ['DATE', 'ID', 'TMIN', 'TMAX', 'PRCP', 'SNOW', 'SNWD', 'Season']
+        if not all(col in df.columns for col in required_cols):
+            raise ValueError(f"DataFrame must contain all required columns: {required_cols}")
 
     def preprocess_dates(self):
-        """Preprocess the 'DATE' column and convert it to datetime."""
+        """Convert DATE to datetime and extract Month and Day for historical means."""
         self.df['DATE'] = pd.to_datetime(self.df['DATE'])
+        self.df['Month'] = self.df['DATE'].dt.month
+        self.df['Day'] = self.df['DATE'].dt.day
 
     def compute_station_correlations(self):
-        """Precompute correlations between TMIN/TMAX and PRCP."""
+        """Precompute correlations between TMIN/TMAX and PRCP for each station."""
         for station_id, group in self.df.groupby('ID'):
-            correlation_tmin_prcp = group['TMIN'].corr(group['PRCP'])
-            correlation_tmax_prcp = group['TMAX'].corr(group['PRCP'])
-            self.station_correlations[station_id] = {
-                'correlation_tmin_prcp': correlation_tmin_prcp,
-                'correlation_tmax_prcp': correlation_tmax_prcp
-            }
+            if group['TMIN'].notna().sum() > 1 and group['TMAX'].notna().sum() > 1:
+                correlation_tmin_prcp = group['TMIN'].corr(group['PRCP'])
+                correlation_tmax_prcp = group['TMAX'].corr(group['PRCP'])
+                self.station_correlations[station_id] = {
+                    'correlation_tmin_prcp': correlation_tmin_prcp,
+                    'correlation_tmax_prcp': correlation_tmax_prcp
+                }
+            else:
+                self.station_correlations[station_id] = {
+                    'correlation_tmin_prcp': np.nan,
+                    'correlation_tmax_prcp': np.nan
+                }
 
     def fill_missing_temperatures(self, alpha=0.6):
-        """Fill missing TMIN and TMAX using interpolation and adjust based on correlations."""
-        self.df[['TMIN', 'TMAX']] = self.df[['TMIN', 'TMAX']].interpolate(method='linear')
-
-        # Use ThreadPoolExecutor for parallel execution across stations
+        """Fill missing TMIN and TMAX station-wise."""
+        original_tmin_missing = self.df['TMIN'].isnull()
+        original_tmax_missing = self.df['TMAX'].isnull()
+        
+        # Step 1: Station-wise interpolation
+        for station_id, group in self.df.groupby('ID'):
+            self.df.loc[group.index, ['TMIN', 'TMAX']] = group[['TMIN', 'TMAX']].interpolate(method='linear')
+        
+        # Step 2: Station-wise same-date means
+        for station_id, group in self.df.groupby('ID'):
+            for col in ['TMIN', 'TMAX']:
+                still_missing = self.df.loc[group.index, col].isnull()
+                if still_missing.any():
+                    date_means = group.groupby(['Month', 'Day'])[col].mean()
+                    missing_indices = self.df.loc[group.index][still_missing].index
+                    for idx in missing_indices:
+                        month = self.df.at[idx, 'Month']
+                        day = self.df.at[idx, 'Day']
+                        if (month, day) in date_means.index:
+                            self.df.at[idx, col] = date_means[(month, day)]
+        
+        # Step 3: Station-wise seasonal means
+        for station_id, group in self.df.groupby('ID'):
+            for col in ['TMIN', 'TMAX']:
+                still_missing = self.df.loc[group.index, col].isnull()
+                if still_missing.any():
+                    seasonal_means = group.groupby('Season')[col].mean()
+                    missing_indices = self.df.loc[group.index][still_missing].index
+                    for idx in missing_indices:
+                        season = self.df.at[idx, 'Season']
+                        if season in seasonal_means.index:
+                            self.df.at[idx, col] = seasonal_means[season]
+        
+        # Step 4: Station-specific adjustments using PRCP correlations
         with ThreadPoolExecutor() as executor:
             futures = []
             for station_id, group in self.df.groupby('ID'):
-                futures.append(executor.submit(self._fill_missing_station_temperatures, group, station_id, alpha))
-
+                futures.append(executor.submit(self._fill_missing_station_temperatures, group, station_id, alpha, 
+                                               original_tmin_missing[group.index], original_tmax_missing[group.index]))
             for future in futures:
-                future.result()  # Ensure all threads complete
+                future.result()
 
-    def _fill_missing_station_temperatures(self, group, station_id, alpha):
-        """Helper method to fill missing temperatures for each station."""
+    def _fill_missing_station_temperatures(self, group, station_id, alpha, tmin_missing, tmax_missing):
+        """Adjust missing TMIN/TMAX based on PRCP correlations."""
         correlation_tmin_prcp = self.station_correlations[station_id].get('correlation_tmin_prcp', None)
         correlation_tmax_prcp = self.station_correlations[station_id].get('correlation_tmax_prcp', None)
 
-        missing_tmin_mask = group['TMIN'].isnull()
-        missing_tmax_mask = group['TMAX'].isnull()
-
-        # Adjust missing TMIN values based on correlation if it exists
-        if missing_tmin_mask.any():
-            group.loc[missing_tmin_mask, 'TMIN'] = self._adjust_missing_value(
-                group[missing_tmin_mask], 'TMIN', correlation_tmin_prcp, alpha)
-
-        # Adjust missing TMAX values based on correlation if it exists
-        if missing_tmax_mask.any():
-            group.loc[missing_tmax_mask, 'TMAX'] = self._adjust_missing_value(
-                group[missing_tmax_mask], 'TMAX', correlation_tmax_prcp, alpha)
-
+        if tmin_missing.any() and not group['PRCP'].isnull().all():
+            group.loc[tmin_missing, 'TMIN'] = self._adjust_missing_value(group[tmin_missing], 'TMIN', correlation_tmin_prcp, alpha)
+        if tmax_missing.any() and not group['PRCP'].isnull().all():
+            group.loc[tmax_missing, 'TMAX'] = self._adjust_missing_value(group[tmax_missing], 'TMAX', correlation_tmax_prcp, alpha)
+        
         self.df.loc[group.index, ['TMIN', 'TMAX']] = group[['TMIN', 'TMAX']].round(2)
 
     def _adjust_missing_value(self, group, column, correlation, alpha):
-        """Helper function to adjust missing values based on correlation or fallback to previous/next day."""
-        if pd.notna(correlation):  # Use correlation if available
+        """Helper to adjust values based on correlation or fallback to fill."""
+        if pd.notna(correlation):
             prev_vals = group[column].shift(1)
             next_vals = group[column].shift(-1)
             adjustment = (next_vals - prev_vals) * correlation
-            adjusted_values = group[column] + alpha * adjustment
-            return adjusted_values.round(2)
-        else:  # If no correlation, fallback to previous/next day values
-            adjusted_values = group[column].fillna(method='ffill').fillna(method='bfill')
-            return adjusted_values.round(2)
-
-    def fill_missing_snow(self):
-        """Handle missing or zero SNOW values."""
-        snow_zero_mask = self.df['SNOW'].isnull() | (self.df['SNOW'] == 0)
-        prcp_zero_mask = self.df['PRCP'] == 0
-        
-        # Fill missing snow values with the previous value if possible
-        self.df.loc[snow_zero_mask & prcp_zero_mask, 'SNOW'] = 0
-        self.df.loc[snow_zero_mask & ~prcp_zero_mask, 'SNOW'] = self.df['SNOW'].shift(1)
-
-        # Fallback to next available snow value if still missing
-        self.df['SNOW'] = self.df['SNOW'].bfill().round(2)
+            return (group[column] + alpha * adjustment).round(2)
+        return group[column].ffill().bfill().round(2)
 
     def fill_missing_prcp(self):
-        """Fill missing PRCP values based on correlation with TMIN/TMAX."""
-        # Use ThreadPoolExecutor for parallel execution across stations
+        """Fill missing PRCP station-wise (not needed for current data, but included for completeness)."""
+        # Step 1: Station-wise interpolation
+        for station_id, group in self.df.groupby('ID'):
+            self.df.loc[group.index, 'PRCP'] = group['PRCP'].interpolate(method='linear')
+        
+        # Step 2: Station-wise same-date means
+        for station_id, group in self.df.groupby('ID'):
+            still_missing = self.df.loc[group.index, 'PRCP'].isnull()
+            if still_missing.any():
+                date_means = group.groupby(['Month', 'Day'])['PRCP'].mean()
+                missing_indices = self.df.loc[group.index][still_missing].index
+                for idx in missing_indices:
+                    month = self.df.at[idx, 'Month']
+                    day = self.df.at[idx, 'Day']
+                    if (month, day) in date_means.index:
+                        self.df.at[idx, 'PRCP'] = date_means[(month, day)]
+        
+        # Step 3: Station-wise seasonal means
+        for station_id, group in self.df.groupby('ID'):
+            still_missing = self.df.loc[group.index, 'PRCP'].isnull()
+            if still_missing.any():
+                seasonal_means = group.groupby('Season')['PRCP'].mean()
+                missing_indices = self.df.loc[group.index][still_missing].index
+                for idx in missing_indices:
+                    season = self.df.at[idx, 'Season']
+                    if season in seasonal_means.index:
+                        self.df.at[idx, 'PRCP'] = seasonal_means[season]
+        
+        # Step 4: Station-specific adjustments
         with ThreadPoolExecutor() as executor:
             futures = []
             for station_id, group in self.df.groupby('ID'):
                 futures.append(executor.submit(self._fill_missing_station_prcp, group, station_id))
-
             for future in futures:
-                future.result()  # Ensure all threads complete
+                future.result()
+        
+        self.df['PRCP'] = self.df['PRCP'].clip(lower=0).round(2)
 
     def _fill_missing_station_prcp(self, group, station_id):
-        """Helper method to fill missing PRCP values for each station."""
+        """Adjust PRCP based on TMIN/TMAX correlations."""
         correlation_tmin_prcp = self.station_correlations[station_id].get('correlation_tmin_prcp', None)
         correlation_tmax_prcp = self.station_correlations[station_id].get('correlation_tmax_prcp', None)
-        
         missing_prcp_mask = group['PRCP'].isnull()
         
         if missing_prcp_mask.any():
             prev_prcp = group['PRCP'].shift(1)
             next_prcp = group['PRCP'].shift(-1)
             avg_prcp = pd.concat([prev_prcp, next_prcp], axis=1).mean(axis=1)
-
-            # Use correlation to adjust the missing PRCP values if correlation exists
             if pd.notna(correlation_tmin_prcp) and pd.notna(correlation_tmax_prcp):
                 adjusted_prcp = avg_prcp + (group['TMIN'] - group['TMIN'].shift(1)) * correlation_tmin_prcp
                 adjusted_prcp += (group['TMAX'] - group['TMAX'].shift(1)) * correlation_tmax_prcp
-            else:
-                # If no correlation, fill with previous or next day values
-                adjusted_prcp = group['PRCP'].fillna(method='ffill').fillna(method='bfill')
-
-            group.loc[missing_prcp_mask, 'PRCP'] = adjusted_prcp.round(2)
+                group.loc[missing_prcp_mask, 'PRCP'] = adjusted_prcp.round(2)
         
         self.df.loc[group.index, 'PRCP'] = group['PRCP'].round(2)
 
+    def fill_missing_snow(self):
+        """Fill missing SNOW station-wise (not needed for current data, but included)."""
+        # Step 1: Station-wise interpolation
+        for station_id, group in self.df.groupby('ID'):
+            self.df.loc[group.index, 'SNOW'] = group['SNOW'].interpolate(method='linear')
+        
+        # Step 2: Station-wise same-date means
+        for station_id, group in self.df.groupby('ID'):
+            still_missing = self.df.loc[group.index, 'SNOW'].isnull()
+            if still_missing.any():
+                date_means = group.groupby(['Month', 'Day'])['SNOW'].mean()
+                missing_indices = self.df.loc[group.index][still_missing].index
+                for idx in missing_indices:
+                    month = self.df.at[idx, 'Month']
+                    day = self.df.at[idx, 'Day']
+                    if (month, day) in date_means.index:
+                        self.df.at[idx, 'SNOW'] = date_means[(month, day)]
+        
+        # Step 3: Station-wise seasonal logic
+        for station_id, group in self.df.groupby('ID'):
+            still_missing = self.df.loc[group.index, 'SNOW'].isnull()
+            if still_missing.any():
+                seasonal_means = group.groupby('Season')['SNOW'].mean()
+                missing_indices = self.df.loc[group.index][still_missing].index
+                for idx in missing_indices:
+                    season = self.df.at[idx, 'Season']
+                    prcp = self.df.at[idx, 'PRCP']
+                    if prcp == 0:
+                        self.df.at[idx, 'SNOW'] = 0
+                    elif season == 'Winter' and season in seasonal_means.index:
+                        self.df.at[idx, 'SNOW'] = seasonal_means[season]
+                    else:
+                        self.df.at[idx, 'SNOW'] = 0
+        
+        self.df['SNOW'] = self.df['SNOW'].clip(lower=0).round(2)
+
     def fill_missing_snwd(self):
-        """Handle missing SNWD values when SNOW is present or missing."""
-        # Use ThreadPoolExecutor for parallel execution across stations
+        """Fill missing SNWD station-wise (not needed for current data, but included)."""
+        # Step 1: Station-wise interpolation
+        for station_id, group in self.df.groupby('ID'):
+            self.df.loc[group.index, 'SNWD'] = group['SNWD'].interpolate(method='linear')
+        
+        # Step 2: Station-wise same-date means
+        for station_id, group in self.df.groupby('ID'):
+            still_missing = self.df.loc[group.index, 'SNWD'].isnull()
+            if still_missing.any():
+                date_means = group.groupby(['Month', 'Day'])['SNWD'].mean()
+                missing_indices = self.df.loc[group.index][still_missing].index
+                for idx in missing_indices:
+                    month = self.df.at[idx, 'Month']
+                    day = self.df.at[idx, 'Day']
+                    if (month, day) in date_means.index:
+                        self.df.at[idx, 'SNWD'] = date_means[(month, day)]
+        
+        # Step 3: Station-specific SNWD adjustment
         with ThreadPoolExecutor() as executor:
             futures = []
             for station_id, group in self.df.groupby('ID'):
                 futures.append(executor.submit(self._fill_missing_station_snwd, group, station_id))
-
             for future in futures:
-                future.result()  # Ensure all threads complete
+                future.result()
 
     def _fill_missing_station_snwd(self, group, station_id):
-        """Helper method to fill missing SNWD values for each station."""
+        """Adjust SNWD based on SNOW correlation or accumulation."""
         correlation_snwd_snow = group['SNWD'].corr(group['SNOW']) if group['SNWD'].notna().any() else np.nan
-        
-        missing_snwd_mask = group['SNWD'].isnull() & (group['SNOW'] > 0)
+        missing_snwd_mask = group['SNWD'].isnull()
         
         if missing_snwd_mask.any():
-            # Adjust missing SNWD values based on the correlation with SNOW
-            previous_snwd = group['SNWD'].shift(1)
-            next_snwd = group['SNWD'].shift(-1)
-            adjusted_snwd = previous_snwd + correlation_snwd_snow * (group['SNOW'] - group['SNOW'].shift(1))
+            previous_snwd = group['SNWD'].shift(1).fillna(0)
+            if pd.notna(correlation_snwd_snow):
+                adjusted_snwd = previous_snwd + correlation_snwd_snow * (group['SNOW'] - group['SNOW'].shift(1).fillna(0))
+            else:
+                adjusted_snwd = previous_snwd + group['SNOW']
+            group.loc[missing_snwd_mask, 'SNWD'] = adjusted_snwd.clip(lower=0).round(2)
 
-            group.loc[missing_snwd_mask, 'SNWD'] = adjusted_snwd.round(2)
-
-        # If no snow, set SNWD to 0
         group.loc[group['SNOW'] == 0, 'SNWD'] = 0
-
-        self.df.loc[group.index, 'SNWD'] = group['SNWD'].round(2)
+        self.df.loc[group.index, 'SNWD'] = group['SNWD'].clip(lower=0).round(2)
 
     def clean_all(self, alpha=0.6):
-        """Run all the cleaning methods."""
+        """Run all cleaning methods."""
         self.preprocess_dates()
-        self.compute_station_correlations()  # Precompute correlations
+        self.compute_station_correlations()
         self.fill_missing_temperatures(alpha)
-        self.fill_missing_snow()
         self.fill_missing_prcp()
-        self.fill_missing_snwd()  # New method to handle missing SNWD
+        self.fill_missing_snow()
+        self.fill_missing_snwd()
+        self.df = self.df.drop(columns=['Month', 'Day'])
         return self.df
-

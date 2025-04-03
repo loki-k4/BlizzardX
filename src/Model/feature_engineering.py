@@ -1,8 +1,7 @@
 import pandas as pd
 import numpy as np
-
-import pandas as pd
-import numpy as np
+from imblearn.over_sampling import SMOTE
+from sklearn.model_selection import train_test_split
 
 class FeatureEngineering:
     def __init__(self, df):
@@ -124,4 +123,6 @@ class ColdEventDetector:
         """Apply cold event detection station-wise."""
         self.df = self.df.groupby('Station_ID', group_keys=False).apply(self.define_cold_event)
         return self.df
+    
+
 
