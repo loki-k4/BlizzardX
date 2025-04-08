@@ -22,3 +22,5 @@ prophet
 ipywidgets
 dask
 pyarrow
+geopandas
+contextily
