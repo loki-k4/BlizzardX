@@ -20,3 +20,5 @@ aiohttp
 statsmodels
 prophet
 ipywidgets
+dask
+pyarrow
