@@ -1,0 +1,20 @@
+{
+    "cpu_config": {
+        "async_fetch": true,
+        "cpu_usage_limit": 70,
+        "max_concurrent_workers": 6,
+        "max_concurrent_processes": 3,
+        "cpu_check_interval": 3,
+        "chunk_size": 10,
+        "dynamic_worker_adjustment": true,
+        "data_type": "csv"
+    },
+    
+    "data_sources": {
+        "inventory": "https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt",
+        "stations": "https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt",
+        "countries": "https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt",
+        "states": "https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt",
+        "state_raw": "https://raw.githubusercontent.com/georgique/world-geojson/develop/states/usa/new_hampshire.json"
+    }
+}

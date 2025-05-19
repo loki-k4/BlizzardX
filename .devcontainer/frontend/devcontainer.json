@@ -1,0 +1,33 @@
+{
+    "name": "Python 3.11 Development Container",
+    "image": "mcr.microsoft.com/devcontainers/python:3.11",
+    "features": {
+      "ghcr.io/devcontainers/features/python:1": {
+        "version": "3.11"
+      }
+    },
+    "customizations": {
+      "codespaces": {
+        "openFiles": []
+      },
+      "vscode": {
+        "extensions": [
+          "ms-toolsai.jupyter",
+          "ms-python.python",
+          "ms-python.pylance",
+          "github.copilot"
+        ]
+      }
+    },
+    "hostRequirements": {
+      "cpus": 4,
+      "memory": "16GB"
+    },
+    "waitFor": "none",
+    "postCreateCommand": "pip install --cache-dir=/tmp/.cache -r requirements.txt",
+    "forwardPorts": [5001],
+    "postStartCommand": "python main.py",
+    "containerEnv": {
+      "ENV": "development"
+    }
+  }
