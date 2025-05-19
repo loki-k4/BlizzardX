@@ -323,108 +323,108 @@ function App() {
         </Typography>
 
         {/* State and Station Selection with Statistics */}
-        <Grid container spacing={3} sx={{ mb: 6, alignItems: 'center' }} id="temp-stats">
-          {/* State Dropdown with Label */}
-          <Grid item xs={12} md={6}>
-            <Grid container alignItems="center" spacing={1}>
-              <Grid item>
-                <Typography sx={{ color: 'white', fontWeight: 500, minWidth: 50 }}>State</Typography>
-              </Grid>
-              <Grid item xs>
-                <FormControl fullWidth>
-                  <Select
-                    value={selectedState}
-                    onChange={handleStateChange}
-                    sx={{
-                      color: 'white',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.3)'
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.5)'
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#21CBF3'
-                      },
-                      height: '56px'
-                    }}
-                  >
-                    {states.map(state => (
-                      <MenuItem key={state} value={state}>{state}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Grid>
-          {/* Station Dropdown with Label */}
-          <Grid item xs={12} md={6}>
-            <Grid container alignItems="center" spacing={1}>
-              <Grid item>
-                <Typography sx={{ color: 'white', fontWeight: 500, minWidth: 60 }}>Station</Typography>
-              </Grid>
-              <Grid item xs>
-                <FormControl fullWidth>
-                  <Select
-                    value={selectedStation}
-                    onChange={handleStationChange}
-                    sx={{
-                      color: 'white',
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.3)'
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'rgba(255, 255, 255, 0.5)'
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#21CBF3'
-                      },
-                      height: '56px'
-                    }}
-                  >
-                    {stations.map(station => (
-                      <MenuItem key={station} value={station}>{station}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
-          </Grid>
-          {/* Temperature Statistics below, full width */}
-          <Grid item xs={12}>
-            <Paper sx={{
-              p: 3,
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(10px)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              boxShadow: '0 8px 32px 0 rgba(0, 4, 40, 0.3)',
-              mt: 2
+        <Box sx={{ mb: 6, width: '100%' }} id="temp-stats">
+          {/* Dropdowns Container */}
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: 3,
+            mb: 3
+          }}>
+            {/* State Dropdown */}
+            <Box sx={{ flex: 1 }}>
+              <Typography sx={{ color: 'white', fontWeight: 500, mb: 1 }}>State</Typography>
+              <FormControl fullWidth>
+                <Select
+                  value={selectedState}
+                  onChange={handleStateChange}
+                  sx={{
+                    color: 'white',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255, 255, 255, 0.3)'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255, 255, 255, 0.5)'
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#21CBF3'
+                    },
+                    height: '56px'
+                  }}
+                >
+                  {states.map(state => (
+                    <MenuItem key={state} value={state}>{state}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Station Dropdown */}
+            <Box sx={{ flex: 1 }}>
+              <Typography sx={{ color: 'white', fontWeight: 500, mb: 1 }}>Station</Typography>
+              <FormControl fullWidth>
+                <Select
+                  value={selectedStation}
+                  onChange={handleStationChange}
+                  sx={{
+                    color: 'white',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255, 255, 255, 0.3)'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255, 255, 255, 0.5)'
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#21CBF3'
+                    },
+                    height: '56px'
+                  }}
+                >
+                  {stations.map(station => (
+                    <MenuItem key={station} value={station}>{station}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
+
+          {/* Temperature Statistics */}
+          <Paper sx={{
+            p: 3,
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: '16px',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 8px 32px 0 rgba(0, 4, 40, 0.3)'
+          }}>
+            <Typography variant="h6" gutterBottom sx={{ color: 'white', textAlign: 'center' }}>
+              Temperature Statistics
+            </Typography>
+            <Box sx={{ 
+              display: 'flex', 
+              flexWrap: 'wrap',
+              gap: 2,
+              justifyContent: 'space-between'
             }}>
-              <Typography variant="h6" gutterBottom sx={{ color: 'white', textAlign: 'center' }}>
-                Temperature Statistics
-              </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="subtitle2" sx={{ color: 'white' }}>Predicted Mean</Typography>
-                  <Typography variant="h6" sx={{ color: 'white' }}>{stats?.predicted_mean.toFixed(1)}°F</Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="subtitle2" sx={{ color: 'white' }}>Actual Mean</Typography>
-                  <Typography variant="h6" sx={{ color: 'white' }}>{stats?.actual_mean.toFixed(1)}°F</Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="subtitle2" sx={{ color: 'white' }}>RMSE</Typography>
-                  <Typography variant="h6" sx={{ color: 'white' }}>{stats?.rmse.toFixed(1)}°F</Typography>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Typography variant="subtitle2" sx={{ color: 'white' }}>MAE</Typography>
-                  <Typography variant="h6" sx={{ color: 'white' }}>{stats?.mae.toFixed(1)}°F</Typography>
-                </Grid>
-              </Grid>
-            </Paper>
-          </Grid>
-        </Grid>
+              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+                <Typography variant="subtitle2" sx={{ color: 'white' }}>Predicted Mean</Typography>
+                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.predicted_mean.toFixed(1)}°F</Typography>
+              </Box>
+              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+                <Typography variant="subtitle2" sx={{ color: 'white' }}>Actual Mean</Typography>
+                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.actual_mean.toFixed(1)}°F</Typography>
+              </Box>
+              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+                <Typography variant="subtitle2" sx={{ color: 'white' }}>RMSE</Typography>
+                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.rmse.toFixed(1)}°F</Typography>
+              </Box>
+              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+                <Typography variant="subtitle2" sx={{ color: 'white' }}>MAE</Typography>
+                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.mae.toFixed(1)}°F</Typography>
+              </Box>
+            </Box>
+          </Paper>
+        </Box>
 
         {loading ? (
           <Box display="flex" justifyContent="center" my={4}>
@@ -447,7 +447,7 @@ function App() {
                   boxShadow: '0 12px 40px 0 rgba(0, 4, 40, 0.5)'
                 },
                 mb: 4,
-                width: '100%',
+                width: '95%',
                 mx: 'auto'
               }}>
                 <Typography
@@ -815,6 +815,76 @@ function App() {
           </Grid>
         )}
       </Container>
+      {/* Footer */}
+      <Box
+        component="footer"
+        sx={{
+          py: 3,
+          px: 2,
+          mt: 'auto',
+          backgroundColor: 'rgba(0, 4, 40, 0.8)',
+          backdropFilter: 'blur(10px)',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          position: 'relative',
+          zIndex: 1
+        }}
+      >
+        <Container maxWidth="lg">
+          <Typography
+            variant="h6"
+            align="center"
+            sx={{
+              color: 'white',
+              mb: 2,
+              fontWeight: 'bold',
+              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}
+          >
+            Team Members
+          </Typography>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: { xs: 1, sm: 4 },
+              flexWrap: 'wrap'
+            }}
+          >
+            {[
+              { name: 'Lokeswar Kudumula', github: 'https://github.com/loki-k4' },
+              { name: 'Sree Sai Preetham Kadiyam', github: 'https://github.com/k-preetham' },
+              { name: 'Hema Pushpika Koduru', github: 'https://github.com/Hkonduru09' },
+              { name: 'Sai Namruth Thimmapuram', github: 'https://github.com/tngoud' }
+            ].map((member, index) => (
+              <Typography
+                key={index}
+                variant="body1"
+                component="a"
+                href={member.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.8)',
+                  textAlign: 'center',
+                  transition: 'all 0.3s ease',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  '&:hover': {
+                    color: '#21CBF3',
+                    transform: 'translateY(-2px)'
+                  }
+                }}
+              >
+                {member.name}
+              </Typography>
+            ))}
+          </Box>
+        </Container>
+      </Box>
     </>
   );
 }

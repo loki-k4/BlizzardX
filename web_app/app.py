@@ -8,12 +8,15 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
-# Load both CSVs
+# Load the data
 current_dir = os.path.dirname(os.path.abspath(__file__))
-data_dir = os.path.join(os.path.dirname(current_dir), 'Data')
+root_dir = os.path.dirname(current_dir)
+notebooks_dir = os.path.join(root_dir, 'Notebooks')
+
+# Load both CSVs
 dfs = {
-    "New Hampshire": pd.read_csv(os.path.join(data_dir, "NewHampshire_ColdEvent_Enhanced.csv")),
-    "Vermont": pd.read_csv(os.path.join(data_dir, "Vermont_ColdEvent_Enhanced.csv"))
+    "New Hampshire": pd.read_csv(os.path.join(notebooks_dir, "NewHampshire_ColdEvent_Enhanced.csv")),
+    "Vermont": pd.read_csv(os.path.join(notebooks_dir, "Vermont_ColdEvent_Enhanced.csv"))
 }
 
 # Convert DATE to datetime and extract year
@@ -62,16 +65,26 @@ def get_data():
     station = request.args.get('station')
     if state not in dfs or not station:
         return jsonify({'data': [], 'stats': {}})
-    df = dfs[state]
-    filtered_df = df[df['NAME'] == station]
-    # Example stats and data (customize as needed)
+    
+    filtered_df = dfs[state][dfs[state]['Station_ID'] == station]
+    
+    # Calculate statistics
     stats = {
-        'predicted_mean': float(filtered_df['TMIN'].mean()),
-        'actual_mean': float(filtered_df['TMAX'].mean()),
-        'rmse': float(np.sqrt(np.mean((filtered_df['TMIN'] - filtered_df['TMAX']) ** 2))),
-        'mae': float(np.mean(np.abs(filtered_df['TMIN'] - filtered_df['TMAX'])))
+        'predicted_mean': float(filtered_df['Predicted_TMIN'].mean()),
+        'actual_mean': float(filtered_df['Actual_TMIN'].mean()),
+        'rmse': float(np.sqrt(np.mean((filtered_df['Predicted_TMIN'] - filtered_df['Actual_TMIN']) ** 2))),
+        'mae': float(np.mean(np.abs(filtered_df['Predicted_TMIN'] - filtered_df['Actual_TMIN'])))
     }
-    data = filtered_df[['DATE', 'TMIN', 'TMAX']].rename(columns={'TMIN': 'predicted', 'TMAX': 'actual', 'DATE': 'date'}).to_dict('records')
+    
+    # Prepare data for visualization
+    data = filtered_df[['DATE', 'Predicted_TMIN', 'Actual_TMIN']].rename(
+        columns={
+            'Predicted_TMIN': 'predicted',
+            'Actual_TMIN': 'actual',
+            'DATE': 'date'
+        }
+    ).to_dict('records')
+    
     return jsonify({'data': data, 'stats': stats})
 
 @app.route('/api/distribution', methods=['GET'])
@@ -110,7 +123,7 @@ def get_stations():
     state = request.args.get('state')
     if state not in dfs:
         return jsonify([])
-    stations = sorted(dfs[state]['NAME'].unique().tolist())
+    stations = sorted(dfs[state]['Station_ID'].unique().tolist())
     return jsonify(stations)
 
 @app.route('/api/station_comparison', methods=['GET'])
@@ -118,13 +131,13 @@ def station_comparison():
     state = request.args.get('state')
     if state not in dfs:
         return jsonify([])
-    df = dfs[state]
+    
     results = []
-    for station in df['NAME'].unique():
-        station_df = df[df['NAME'] == station]
-        # Dummy RMSE calculation (replace with your actual logic)
-        rmse = float(np.sqrt(np.mean((station_df['TMIN'] - station_df['TMAX']) ** 2)))
+    for station in dfs[state]['Station_ID'].unique():
+        station_df = dfs[state][dfs[state]['Station_ID'] == station]
+        rmse = float(np.sqrt(np.mean((station_df['Predicted_TMIN'] - station_df['Actual_TMIN']) ** 2)))
         results.append({'Station_ID': station, 'rmse': rmse})
+    
     return jsonify(results)
 
 if __name__ == '__main__':
