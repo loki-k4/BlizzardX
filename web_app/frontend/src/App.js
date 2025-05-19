@@ -189,7 +189,7 @@ function App() {
     for (let i = min; i <= max; i += binSize) {
       const count = temps.filter(t => t >= i && t < i + binSize).length;
       distribution.push({
-        range: `${i}°F - ${i + binSize}°F`,
+        range: `${i}°C - ${i + binSize}°C`,
         count: count
       });
     }
@@ -395,32 +395,53 @@ function App() {
             backdropFilter: 'blur(10px)',
             borderRadius: '16px',
             border: '1px solid rgba(255, 255, 255, 0.2)',
-            boxShadow: '0 8px 32px 0 rgba(0, 4, 40, 0.3)'
+            boxShadow: '0 8px 32px 0 rgba(0, 4, 40, 0.3)',
+            width: '96%'
           }}>
             <Typography variant="h6" gutterBottom sx={{ color: 'white', textAlign: 'center' }}>
               Temperature Statistics
             </Typography>
             <Box sx={{ 
               display: 'flex', 
-              flexWrap: 'wrap',
+              flexDirection: 'row',
+              justifyContent: 'space-between',
               gap: 2,
-              justifyContent: 'space-between'
+              width: '100%'
             }}>
-              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+              <Box sx={{ 
+                flex: 1,
+                textAlign: 'center',
+                p: 2,
+                borderRight: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
                 <Typography variant="subtitle2" sx={{ color: 'white' }}>Predicted Mean</Typography>
-                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.predicted_mean.toFixed(1)}°F</Typography>
+                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.predicted_mean.toFixed(1)}°C</Typography>
               </Box>
-              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+              <Box sx={{ 
+                flex: 1,
+                textAlign: 'center',
+                p: 2,
+                borderRight: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
                 <Typography variant="subtitle2" sx={{ color: 'white' }}>Actual Mean</Typography>
-                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.actual_mean.toFixed(1)}°F</Typography>
+                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.actual_mean.toFixed(1)}°C</Typography>
               </Box>
-              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+              <Box sx={{ 
+                flex: 1,
+                textAlign: 'center',
+                p: 2,
+                borderRight: '1px solid rgba(255, 255, 255, 0.1)'
+              }}>
                 <Typography variant="subtitle2" sx={{ color: 'white' }}>RMSE</Typography>
-                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.rmse.toFixed(1)}°F</Typography>
+                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.rmse.toFixed(1)}°C</Typography>
               </Box>
-              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+              <Box sx={{ 
+                flex: 1,
+                textAlign: 'center',
+                p: 2
+              }}>
                 <Typography variant="subtitle2" sx={{ color: 'white' }}>MAE</Typography>
-                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.mae.toFixed(1)}°F</Typography>
+                <Typography variant="h6" sx={{ color: 'white' }}>{stats?.mae.toFixed(1)}°C</Typography>
               </Box>
             </Box>
           </Paper>
@@ -481,7 +502,7 @@ function App() {
                       />
                       <YAxis
                         label={{
-                          value: 'Temperature (°F)',
+                          value: 'Temperature (°C)',
                           angle: -90,
                           position: 'insideLeft',
                           fill: 'white',
@@ -492,7 +513,7 @@ function App() {
                       />
                       <Tooltip
                         labelFormatter={(date) => new Date(date).toLocaleDateString()}
-                        formatter={(value) => [`${value.toFixed(1)}°F`, '']}
+                        formatter={(value) => [`${value.toFixed(1)}°C`, '']}
                         contentStyle={{
                           background: 'rgba(255, 255, 255, 0.1)',
                           backdropFilter: 'blur(10px)',
@@ -630,14 +651,14 @@ function App() {
                             dataKey="actual"
                             name="Actual"
                             stroke="white"
-                            label={{ value: 'Actual Temperature (°F)', position: 'bottom', fill: 'white' }}
+                            label={{ value: 'Actual Temperature (°C)', position: 'bottom', fill: 'white' }}
                             tick={{ fill: 'white' }}
                           />
                           <YAxis
                             dataKey="predicted"
                             name="Predicted"
                             stroke="white"
-                            label={{ value: 'Predicted Temperature (°F)', angle: -90, position: 'insideLeft', fill: 'white' }}
+                            label={{ value: 'Predicted Temperature (°C)', angle: -90, position: 'insideLeft', fill: 'white' }}
                             tick={{ fill: 'white' }}
                           />
                           <Tooltip
@@ -703,12 +724,12 @@ function App() {
                           />
                           <YAxis
                             stroke="white"
-                            label={{ value: 'Temperature (°F)', angle: -90, position: 'insideLeft', fill: 'white' }}
+                            label={{ value: 'Temperature (°C)', angle: -90, position: 'insideLeft', fill: 'white' }}
                             tick={{ fill: 'white' }}
                           />
                           <Tooltip
                             labelFormatter={(date) => new Date(date).toLocaleDateString()}
-                            formatter={(value) => [`${value.toFixed(1)}°F`, '']}
+                            formatter={(value) => [`${value.toFixed(1)}°C`, '']}
                             contentStyle={{
                               background: 'rgba(255, 255, 255, 0.1)',
                               backdropFilter: 'blur(10px)',
@@ -773,12 +794,12 @@ function App() {
                             tick={{ fill: 'white', fontSize: 10 }}
                           />
                           <YAxis
-                            label={{ value: 'RMSE (°F)', angle: -90, position: 'insideLeft', fill: 'white' }}
+                            label={{ value: 'RMSE (°C)', angle: -90, position: 'insideLeft', fill: 'white' }}
                             stroke="white"
                             tick={{ fill: 'white' }}
                           />
                           <Tooltip
-                            formatter={(value) => [`${value.toFixed(1)}°F`, 'RMSE']}
+                            formatter={(value) => [`${value.toFixed(1)}°C`, 'RMSE']}
                             contentStyle={{
                               background: 'rgba(255, 255, 255, 0.1)',
                               backdropFilter: 'blur(10px)',
