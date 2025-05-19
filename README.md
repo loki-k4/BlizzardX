@@ -21,90 +21,19 @@ The dataset from <b>ncei.noaa.gov</b> provides comprehensive environmental data 
 
 **Dataset link:**
 All Data - https://www.ncei.noaa.gov/data/
+Inventory: https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt
+Stations: https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt 
+Countries: https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt 
+States: https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt
+State_raw: https://raw.githubusercontent.com/georgique/world-geojson/develop/states/usa/new_hampshire.json 
 
-**Image Resolution:**
-- BDD100K
-![image](docs/bdd100k.png)
-- Polish12K
-![image](docs/polish12k.png)
+
+
 ### Data Distribution
-The dataset contain 11 classes:
-- Car (Vehicles without a trailer)
-- Different-Traffic-Sign 
-- Green-Traffic-Light
-- Motorcycle
-- Pedestrian (People and cyclists)
-- Pedestrian-Crossing (Pedestrian crossings)
-- Prohibition-Sign (All prohibition signs)
-- Red-Traffic-Light (Red traffic lights for cars only
-- Pedestrians are not annotated)
-- Speed-Limit-Sign (Speed limit signs)
-- Truck (Vehicles with a trailer)
-- Warning-Sign (Warning signs)
+
 
 ### Analysis
-It is an image classification problem. When a new traffic image is passed as input it should detect all kinds of traffic signals, vehicles, pedestrians etc.
 
-### Custom YOLOv8n Model
-YOLOv8 Nano is optimized for speed and resource efficiency at the cost of some accuracy.
-
-**Model Training Workflow:**
-
-![image](docs/Workflow.png)
-
-**Bootstrap Setup:**
-- `bootstrap.sh` initializes the project environment and directories.
-
-**Model Paths and Training:**
-- `config.yaml` Manages paths for images, labels, and models.
-
-**Data Configuration:**
-- `data.yaml`: Defines training (13 classes: pedestrian, car, traffic lights, etc.).
-- `data_finetune.yaml`: Focuses on fine-tuning (11 classes: traffic signs, pedestrians).
-
-**Utility Functions:**
-- `utilities.py` provides helper functions for data handling and training
-
-**Model Architecture:**
-
-![image](docs/YOLOv8-architecture.png)
-
-**Data Preprocessing:**
-- Label Conversion Process
-  - BDD100K to COCO Format
-  - COCO to YOLO Format
-
-![image](docs/YOLO%20Label.png)
-
-**Model Training:**
-- **Training:**
-  - BDD100K: 100,000 images for object detection in autonomous driving.
-- **Finetuning:**
-  - Polish12k: 12,000 images for object detection in autonomous driving.
-
-**Training Configuration:**
- - Epochs: 300 (model was trained for 300 iterations)
- - Batch Size: 64 (images processed per batch for each training step)
- - Image Size: 640x640 pixels (standard input size for balanced accuracy and speed)
- - Patience: 100 (training stops if no significant improvement is seen after 100 consecutive epochs)
-   
-**Device:**
-- 2 x Nvidia H100 (80GB) on CUDA
-
-**Cloud:**
-- Vast AI (https://vast.ai/)
-- Lambda Labs (https://lambdalabs.com/)
-
-### Model Evaluation
-- Mean Average Precision (mAP)
-- Average Precision at IoU=0.50 (AP50)
-- F1 Score
-
-**F1-Confidence Curve**
-![image](docs/F1-Confidence%20Curve.png)
-
-**Confusion Matrix**
-![image](docs/Confusion%20Matrix.png)
 
 
 ### Webapp
@@ -120,10 +49,5 @@ uvicorn app.app:app --reload
 ---
 
 ### References
-- You Only Look Once: Unified, Real-Time Object Detection: https://arxiv.org/abs/1506.02640
-- Ultralytics YOLOv8: https://github.com/ultralytics/ultralytics
-- YOLOv8 Implementation using Pytorch: https://github.com/jahongir7174/YOLOv8-pt
-- BDD100k: https://doc.bdd100k.com/download.html
-- Polish12k: https://www.kaggle.com/datasets/mikoajkoek/traffic-road-object-detection-polish-12k
 
 
