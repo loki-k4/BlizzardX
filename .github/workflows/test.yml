@@ -16,12 +16,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'  # Adjust this as needed
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
-          pip install -r /workspaces/BlizzardX/requirements.txt
+          pip install -r requirements.txt  # ✅ Correct relative path
 
       - name: Run script
         run: |
-          python /workspaces/BlizzardX/Scripts/Weather_data_pipline.py
+          python Scripts/Weather_data_pipline.py  # ✅ Correct relative path
