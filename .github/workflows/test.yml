@@ -5,6 +5,9 @@ on:
     - cron: '0 0 * * *'  # Runs every day at midnight UTC
   workflow_dispatch:     # Allows manual trigger from GitHub UI
 
+permissions:
+  contents: write  # ✅ Allows pushing changes back to the repo
+
 jobs:
   run-script:
     runs-on: ubuntu-latest
@@ -20,8 +23,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt  # ✅ Correct relative path
+          pip install -r requirements.txt
 
       - name: Run script
         run: |
-          python Scripts/Weather_data_pipline.py  # ✅ Correct relative path
+          python Scripts/Weather_data_pipline.py
+
+      - name: Commit and push updated CSVs
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add -A
+          git commit -m "Auto-update data CSVs: $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
+          git push
