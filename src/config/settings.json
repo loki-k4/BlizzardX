@@ -2,7 +2,7 @@
     "cpu_config": {
         "async_fetch": true,
         "cpu_usage_limit": 70,
-        "max_concurrent_workers": 6,
+        "max_concurrent_workers": 12,
         "max_concurrent_processes": 3,
         "cpu_check_interval": 3,
         "chunk_size": 10,
