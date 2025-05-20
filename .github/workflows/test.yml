@@ -29,6 +29,11 @@ jobs:
           pip install -r requirements.txt
           pip list >> pipeline.log  # Log dependencies for debugging
 
+      - name: List repository contents
+        run: |
+          echo "Repository contents:" >> pipeline.log
+          ls -R >> pipeline.log
+
       - name: Remove old CSVs (if any)
         run: |
           rm -f Data/processed_data.csv Data/cleaned_data.csv
@@ -36,8 +41,11 @@ jobs:
 
       - name: Run data pipeline script
         run: |
-          python Scripts/Weather_data_pipeline.py 2>&1 | tee -a pipeline.log
-        continue-on-error: true  # Continue to capture logs even if script fails
+          python Scripts/Weather_data_pipeline.py 2>&1 | tee -a pipeline.log || {
+            echo "Script failed to run. Check file path or script errors." >> pipeline.log
+            exit 1
+          }
+        continue-on-error: true
 
       - name: Upload pipeline log as artifact
         if: always()
@@ -54,8 +62,9 @@ jobs:
 
       - name: Check repository state
         run: |
-          echo "Listing repository files:" >> pipeline.log
+          echo "Listing Data directory:" >> pipeline.log
           ls -la Data/ >> pipeline.log
+          echo "Git status:" >> pipeline.log
           git status >> pipeline.log
 
       - name: Check if CSV files were generated and changed
@@ -96,7 +105,8 @@ jobs:
             git add Data/processed_data.csv Data/cleaned_data.csv
             git commit -m "Auto-update data CSVs: $(date -u +'%Y-%m-%d')" || echo "No changes to commit" >> pipeline.log
           }
-          git push origin main
+          git push origin main '
+
           echo "Pushed changes to main." >> pipeline.log
 
       - name: Upload updated CSVs as artifacts
