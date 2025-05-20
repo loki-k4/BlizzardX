@@ -19,7 +19,7 @@ def setup_logging():
     return logging.getLogger(__name__)
 
 class WeatherDataTransformer:
-    def __init__(self, data, weather_variables, max_workers=4):
+    def __init__(self, data, weather_variables, max_workers=8):
         self.logger = setup_logging()
         self.logger.info("Initializing WeatherDataTransformer")
         
