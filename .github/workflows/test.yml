@@ -24,22 +24,39 @@ jobs:
       - name: Run data pipeline script
         run: python Scripts/Weather_data_pipline.py
 
+      - name: Configure Git identity
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
       - name: Check if CSV files changed
         id: file_changes
         run: |
           # Check for changes in CSV files
-          git diff --exit-code Data/processed_data.csv Data/cleaned_data.csv || echo "Files have changed."
+          git diff --exit-code Data/processed_data.csv Data/cleaned_data.csv || echo "files_changed=true" >> $GITHUB_OUTPUT
+        # Set output for the next step
+        continue-on-error: true
 
       - name: Commit and push changes (if any)
+        if: steps.file_changes.outputs.files_changed == 'true'
         run: |
           # Add only the modified CSV files
           git add Data/processed_data.csv Data/cleaned_data.csv
           git commit -m "Auto-update data CSVs: $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
-          # Pull latest changes with rebase to avoid push conflicts
-          git pull --rebase origin main
+          # Fetch latest changes
+          git fetch origin
+          # Attempt to rebase
+          git pull --rebase origin main || {
+            echo "Rebase failed, resetting and forcing push"
+            git rebase --abort
+            git reset --hard origin/main
+            git add Data/processed_data.csv Data/cleaned_data.csv
+            git commit -m "Auto-update data CSVs: $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
+          }
           git push origin main
 
       - name: Upload updated CSVs as artifacts (Optional)
+        if: steps.file_changes.outputs.files_changed == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: updated-csvs
