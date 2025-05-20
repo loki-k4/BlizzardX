@@ -1,6 +1,6 @@
 import logging
-from .parse import DataParser
-from .fetch import DataFetcher
+from src.data.parse import DataParser
+from src.data.fetch import DataFetcher
 import pandas as pd
 
 # Configure logging to output to console only

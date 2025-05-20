@@ -8,8 +8,8 @@ from tqdm import tqdm
 import logging
 from pathlib import Path
 from src.config.config_manager import ConfigManager
-from data.parse import DataParser
-from utils.cpu_manager import CPUMonitor
+from src.data.parse import DataParser
+from src.utils.cpu_manager import CPUMonitor
 
 # Configure logging to console only
 def setup_logging():
@@ -29,7 +29,9 @@ class DataFetcher:
         
         # Determine config directory dynamically
         if config_directory is None:
-            config_directory = Path(__file__).parent.parent / "src" / "config"
+            project_root = Path(__file__).resolve().parents[1]
+            config_directory = project_root / "config"
+
         else:
             config_directory = Path(config_directory)
         
@@ -205,7 +207,9 @@ class DataFetcher:
     async def save_data(self, station_ids):
         """Determine whether to save the data to CSV or DataFrame based on the configuration."""
         # Set output directory dynamically
-        output_directory = Path(__file__).parent.parent / "Data"
+        project_root = Path(__file__).resolve().parents[1]
+        output_directory = project_root / "Data"
+
         output_filename = output_directory / "station_data.csv"
 
         self.logger.info(f"Starting data save process, data_type={self.data_type}")

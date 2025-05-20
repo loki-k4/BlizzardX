@@ -30,10 +30,10 @@ logging.info(f"sys.path: {sys.path}")
 
 # Import modules
 from src.config.config_manager import ConfigManager
-from data.handler import GHCNDataHandler
-from data.fetch import DataFetcher
-from data.process import WeatherDataTransformer, WeatherDataImputer
-from data.filter import WeatherDataFilter
+from src.data.handler import GHCNDataHandler
+from src.data.fetch import DataFetcher
+from src.data.process import WeatherDataTransformer, WeatherDataImputer
+from src.data.filter import WeatherDataFilter
 
 async def main():
     logging.info("Starting weather data processing pipeline...")
