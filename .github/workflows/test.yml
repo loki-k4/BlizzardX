@@ -8,54 +8,98 @@ on:
 jobs:
   run-pipeline:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Ensure write access for pushing changes
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # Fetch full history to avoid rebase issues
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip list >> pipeline.log  # Log dependencies for debugging
+
+      - name: Remove old CSVs (if any)
+        run: |
+          rm -f Data/processed_data.csv Data/cleaned_data.csv
+          echo "Removed existing CSVs to ensure fresh generation." >> pipeline.log
 
       - name: Run data pipeline script
-        run: python Scripts/Weather_data_pipline.py
+        run: |
+          python Scripts/Weather_data_pipeline.py 2>&1 | tee -a pipeline.log
+        continue-on-error: true  # Continue to capture logs even if script fails
+
+      - name: Upload pipeline log as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-log
+          path: pipeline.log
 
       - name: Configure Git identity
         run: |
-          git config --global user.email "actions@github.com"
-          git config --global user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          echo "Git identity configured." >> pipeline.log
 
-      - name: Check if CSV files changed
+      - name: Check repository state
+        run: |
+          echo "Listing repository files:" >> pipeline.log
+          ls -la Data/ >> pipeline.log
+          git status >> pipeline.log
+
+      - name: Check if CSV files were generated and changed
         id: file_changes
         run: |
-          # Check for changes in CSV files
-          git diff --exit-code Data/processed_data.csv Data/cleaned_data.csv || echo "files_changed=true" >> $GITHUB_OUTPUT
-        # Set output for the next step
-        continue-on-error: true
+          if [ -s Data/processed_data.csv ] && [ -s Data/cleaned_data.csv ]; then
+            echo "Both CSVs exist and are non-empty." >> pipeline.log
+            git add Data/processed_data.csv Data/cleaned_data.csv
+            if git diff --cached --quiet Data/processed_data.csv Data/cleaned_data.csv; then
+              echo "No changes detected in CSVs." >> pipeline.log
+              echo "files_changed=false" >> $GITHUB_OUTPUT
+            else
+              echo "Changes detected in CSVs." >> pipeline.log
+              echo "files_changed=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "One or both CSVs are missing or empty:" >> pipeline.log
+            ls -la Data/ >> pipeline.log
+            echo "files_changed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
 
-      - name: Commit and push changes (if any)
+      - name: Commit changes
         if: steps.file_changes.outputs.files_changed == 'true'
         run: |
-          # Add only the modified CSV files
-          git add Data/processed_data.csv Data/cleaned_data.csv
-          git commit -m "Auto-update data CSVs: $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
-          # Fetch latest changes
+          git commit -m "Auto-update data CSVs: $(date -u +'%Y-%m-%d')"
+          echo "Committed changes." >> pipeline.log
+        continue-on-error: true
+
+      - name: Push changes
+        if: steps.file_changes.outputs.files_changed == 'true'
+        run: |
           git fetch origin
-          # Attempt to rebase
-          git pull --rebase origin main || {
-            echo "Rebase failed, resetting and forcing push"
+          git rebase origin/main || {
+            echo "Rebase failed, resetting and forcing update" >> pipeline.log
             git rebase --abort
             git reset --hard origin/main
             git add Data/processed_data.csv Data/cleaned_data.csv
-            git commit -m "Auto-update data CSVs: $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
+            git commit -m "Auto-update data CSVs: $(date -u +'%Y-%m-%d')" || echo "No changes to commit" >> pipeline.log
           }
           git push origin main
+          echo "Pushed changes to main." >> pipeline.log
 
-      - name: Upload updated CSVs as artifacts (Optional)
+      - name: Upload updated CSVs as artifacts
         if: steps.file_changes.outputs.files_changed == 'true'
         uses: actions/upload-artifact@v4
         with:
