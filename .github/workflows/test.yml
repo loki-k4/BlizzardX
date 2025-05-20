@@ -1,15 +1,12 @@
-name: Daily Script
+name: Daily Data Pipeline
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # Runs every day at midnight UTC
-  workflow_dispatch:     # Allows manual trigger from GitHub UI
-
-permissions:
-  contents: write  # ✅ Allows pushing changes back to the repo
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
+  workflow_dispatch:  # Manual trigger
 
 jobs:
-  run-script:
+  run-pipeline:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,18 +19,30 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      - name: Run script
-        run: |
-          python Scripts/Weather_data_pipline.py
+      - name: Run data pipeline script
+        run: python Scripts/Weather_data_pipline.py
 
-      - name: Commit and push updated CSVs
+      - name: Check if CSV files changed
+        id: file_changes
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git pull origin main --rebase
-          git add -A
+          # Check for changes in CSV files
+          git diff --exit-code Data/processed_data.csv Data/cleaned_data.csv || echo "Files have changed."
+
+      - name: Commit and push changes (if any)
+        run: |
+          # Add only the modified CSV files
+          git add Data/processed_data.csv Data/cleaned_data.csv
           git commit -m "Auto-update data CSVs: $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
-          git push
+          # Pull latest changes with rebase to avoid push conflicts
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Upload updated CSVs as artifacts (Optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: updated-csvs
+          path: |
+            Data/processed_data.csv
+            Data/cleaned_data.csv
