@@ -4,44 +4,56 @@ import numpy as np
 import pandas as pd
 import asyncio
 import logging
+from datetime import datetime
+from pathlib import Path
 
-# Setup logging
+# Dynamically determine project root
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = os.getenv('PROJECT_ROOT', str(SCRIPT_DIR.parent))  # One level up from Scripts/
+sys.path.append(PROJECT_ROOT)
+
+# Setup logging to file and console
+log_dir = Path('/tmp/logs')
+log_dir.mkdir(exist_ok=True)
+log_file = log_dir / f"weather_pipeline__{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.log"
+
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(levelname)s] %(asctime)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format='[%(levelname)s] %(asctime)s - %(name)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[
+        logging.StreamHandler(),  # Log to console
+        logging.FileHandler(log_file)  # Log to file
+    ]
 )
-
-# Add project path
-sys.path.append('/workspaces/BlizzardX')
+logging.info(f"sys.path: {sys.path}")
 
 # Import modules
 from src.config.config_manager import ConfigManager
-from src.ghcn_daily.ghcn_data_handler import GHCNDataHandler
-from src.ghcn_daily.data_fetch import DataFetcher, CurrentYearMonthDataFetcher
-from src.ghcn_daily.data_processing import WeatherDataTransformer, WeatherDataImputer
-from src.ghcn_daily.data_filtering import WeatherDataFilter
+from src.data.handler import GHCNDataHandler
+from src.data.fetch import DataFetcher
+from src.data.process import WeatherDataTransformer, WeatherDataImputer
+from src.data.filter import WeatherDataFilter
 
 async def main():
     logging.info("Starting weather data processing pipeline...")
 
     # Setup
-    config_path = '/workspaces/BlizzardX/src/config'
-    config_file = 'settings.json'
-    processed_data_path = '/workspaces/BlizzardX/Data/processed_data.csv'
-    cleaned_data_path = '/workspaces/BlizzardX/Data/cleaned_data.csv'
+    config_path = str(Path(PROJECT_ROOT) / 'src' / 'config')
+    processed_data_path = str(Path(PROJECT_ROOT) / 'Data' / 'processed_data.csv')
+    cleaned_data_path = str(Path(PROJECT_ROOT) / 'Data' / 'cleaned_data.csv')
 
     try:
         logging.info("Loading configuration...")
         config = ConfigManager(config_directory=config_path)
-        config.load_config(config_file)
+        config.load_config('settings.json')
 
         logging.info("Initializing data handler...")
         ghcn = GHCNDataHandler()
 
         logging.info("Fetching station and inventory data...")
-        stations = ghcn.get_station_data(config.get(config_file, 'data_sources.stations'))
-        inventory = ghcn.get_inventory_data(config.get(config_file, 'data_sources.inventory'))
+        stations = ghcn.get_station_data(config.get('settings.json', 'data_sources.stations'))
+        inventory = ghcn.get_inventory_data(config.get('settings.json', 'data_sources.inventory'))
 
         logging.info("Filtering for active New Hampshire stations...")
         s_state_list = stations[stations['STATE'] == 'NH']['ID'].tolist()
@@ -53,7 +65,7 @@ async def main():
         logging.info(f"Found {len(s_live_list)} active stations in NH.")
 
         logging.info("Fetching latest weather data...")
-        data_fetcher = DataFetcher(config_file=config_file, data_type='dataframe')
+        data_fetcher = DataFetcher(config_file='settings.json', data_type='dataframe')
         data = await data_fetcher.save_data(s_live_list)
         logging.info("Data fetched successfully.")
 
