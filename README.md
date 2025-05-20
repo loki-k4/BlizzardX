@@ -38,6 +38,11 @@ Long-term records of severe storms, satellite imagery, and Earth trends help sup
 - **Countries:** [ghcnd-countries.txt](https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt)  
 - **States:** [ghcnd-states.txt](https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt)  
 - **New Hampshire GeoJSON:** [new_hampshire.json](https://raw.githubusercontent.com/georgique/world-geojson/develop/states/usa/new_hampshire.json)
+---
+
+## EDA
+- Station coverage & Geographic Bias Visual ![image](https://github.com/user-attachments/assets/e18942ae-46ae-4374-a448-f7328196c542)
+
 
 ---
 
