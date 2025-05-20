@@ -1,53 +1,97 @@
-<h1 align="center">BlizzardX</h1>
-<h3 align="center">UMBC DATA606 - Capstone in Data Science</h3>
-<h4 align="right">Dr. Unal Sakoglu</h4>
-<h4 align="left">Hema Pushpika Konduru (hemapuk1@umbc.edu)</h4>
-<h4 align="left">Lokeswar Kudumula (lokeswk1@umbc.edu)</h4>
-<h4 align="left">Namruth Goud Thimmapuram (nthimma1@umbc.edu)</h4>
-<h4 align="left">Sree Sai Preetham Kadiyam (FG32258@umbc.edu)</h4>
+# ❄️ BlizzardX – Cold Event Forecasting  
+### UMBC DATA606 – Capstone in Data Science  
+**Instructor:** Dr. Unal Sakoglu  
+
+**Team Members:**  
+- Hema Pushpika Konduru – hemapuk1@umbc.edu  
+- Lokeswar Kudumula – lokeswk1@umbc.edu  
+- Namruth Goud Thimmapuram – nthimma1@umbc.edu  
+- Sree Sai Preetham Kadiyam – FG32258@umbc.edu  
+
 ---
 
+## 🌨️ Project Motivation  
+Extreme cold events threaten infrastructure, agriculture, and public health. Current forecasts are often broad and slow.  
+**BlizzardX** leverages NOAA GHCN-Daily data and machine learning to deliver **precise**, **localized cold event forecasting** with confidence scoring.
+
+---
+
+## 📊 Dataset Overview  
+- **Source:** NOAA GHCN-Daily  
+- **Focus:** Train on *New Hampshire*, Test on *Vermont*  
+- **Timespan:** ~12 years (2010–2022)  
+- **Features:** `TMIN`, `TMAX`, `SNOW`, `SNWD`, `PRCP` + temporal features
+
+---
+
+## 🧾 Dataset Details  
+The dataset from **ncei.noaa.gov** provides comprehensive environmental data collected globally.  
+It includes weather observations (temperature, precipitation, wind speed, humidity), and also oceanographic and geophysical information.  
+Long-term records of severe storms, satellite imagery, and Earth trends help support forecasting, climate research, and disaster preparedness.
+
+---
+
+## 🔗 Dataset Access Links  
+- **All Data:** [ncei.noaa.gov/data](https://www.ncei.noaa.gov/data/)  
+- **Inventory:** [ghcnd-inventory.txt](https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt)  
+- **Stations:** [ghcnd-stations.txt](https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt)  
+- **Countries:** [ghcnd-countries.txt](https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt)  
+- **States:** [ghcnd-states.txt](https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt)  
+- **New Hampshire GeoJSON:** [new_hampshire.json](https://raw.githubusercontent.com/georgique/world-geojson/develop/states/usa/new_hampshire.json)
+
+---
+
+## 🧠 Feature Engineering  
+We engineered:  
+- Lag features: `TMIN_lag1`, `SNOW_lag1`, etc.  
+- Rolling averages  
+- Seasonal encodings  
+- Interaction terms like `TMIN × SNOW`, `PRCP × SNWD`
+
+---
+
+## ⚙️ Modeling Approach  
+- **Prophet:** Forecasts `TMIN` time series per station  
+- **XGBoost:** Classifies cold events using a 10th percentile threshold  
+- **Output:** Forecast + Binary label + Confidence score
+
+---
+
+## 📈 Evaluation  
+- **Regression:** MAE ~ 0.4°C, RMSE < 1°C  
+- **Classification:** F1 Score > 96%  
+- Generalized well across states (NH → VT)
+
+---
+
+## 📉 Key Visualizations  
+- Predicted vs Actual TMIN (Time Series Line Chart)  
+- Temperature Distribution (Bar Chart)  
+- Prediction Accuracy (Scatter Plot)  
+- Daily Temperature Error (Area Chart)  
+- Station-wise RMSE Comparison (Bar Chart)
+
+---
+
+## ✅ Conclusion & Impact  
+BlizzardX provides **real-time, interpretable**, and **localized cold event detection**.  
+It bridges raw climate data with actionable insights for emergency planning, agriculture, and infrastructure management.
+
+---
+
+## 🔗 GitHub & Contact  
+- [View Project on GitHub](https://github.com/your-username/blizzardx)
+
+---
+
+## 📽️ Demo  
 <p align="center">
-  <img width="900" height="" src="docs/demo.gif">
+  <img width="900" src="docs/demo.gif" alt="Project Demo GIF" />
 </p>
 
-
-### Dataset details
-The dataset from <b>ncei.noaa.gov</b> provides comprehensive environmental data collected from across the globe. It includes weather observations such as temperature, precipitation, wind speed, and humidity on hourly, daily, and monthly scales. The site also hosts long-term climate records, including trends, normals, and extremes. Oceanographic data like sea surface temperature, tides, salinity, and wave height are available, along with geophysical information on earthquakes, tsunamis, and Earth's magnetic field. Additionally, satellite imagery offers insights into cloud cover, land surface changes, and ocean conditions. The platform also includes detailed records of severe storms such as hurricanes and tornadoes. This rich dataset supports climate research, weather forecasting, disaster preparedness, and environmental monitoring.
-
-**Size:**
-- BDD100k: 7GB
-- Polish12k: 11GB
-
-**Dataset link:**
-All Data - https://www.ncei.noaa.gov/data/
-Inventory: https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-inventory.txt
-Stations: https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-stations.txt 
-Countries: https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-countries.txt 
-States: https://www.ncei.noaa.gov/pub/data/ghcn/daily/ghcnd-states.txt
-State_raw: https://raw.githubusercontent.com/georgique/world-geojson/develop/states/usa/new_hampshire.json 
-
-
-
-### Data Distribution
-
-
-### Analysis
-
-
-
-### Webapp
-Webapp with options to live stream or upload video for real-time object detection
-
-Run below command from project root dir
-```sh
-uvicorn app.app:app --reload
-```
-
-![image](docs/Webapp.png)
-
 ---
 
-### References
-
-
+## 📚 References  
+- NOAA GHCN-Daily: [https://www.ncei.noaa.gov/data/](https://www.ncei.noaa.gov/data/)  
+- Facebook Prophet: [https://facebook.github.io/prophet/](https://facebook.github.io/prophet/)  
+- XGBoost: [https://xgboost.ai/](https://xgboost.ai/)  
