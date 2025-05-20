@@ -85,9 +85,7 @@ It bridges raw climate data with actionable insights for emergency planning, agr
 ---
 
 ## 📽️ Demo  
-<p align="center">
-  <img width="900" src="docs/demo.gif" alt="Project Demo GIF" />
-</p>
+![image](https://github.com/user-attachments/assets/d33f905b-162c-470e-b81c-748f6a5faa0d)
 
 ---
 
